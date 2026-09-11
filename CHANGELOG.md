@@ -10,6 +10,10 @@ Initial public version, derived from the private notebook scripts (`one-shot.sh`
 `pass-a.sh`, `pass-b.sh`, `phase14.sh`, `stage-esp.sh`, `frst-test.sh`, `regen-preflight.sh`,
 the toolkit and install-stick builders) with a clean history:
 
+- pre-hardware review fixes: the reset method is never guessed among several FRST methods
+  (`T1R_FRST_METHOD` pins one), the ESP mounted at `/boot` or `/efi` wins over a stick that
+  holds `EFI/APPLE`, ESP-selection failures stop the run, every device-touching step confirms,
+  stale step markers are invalidated, contract exit codes survive step failures
 - step gates match the proven run by default (artefacts present; `8600` after the boot step's watch);
   `--strict` adds idevicerestore exit-status and full 30 s stability requirements
 - one entry point `t1-revive` with `preflight`, `backup`, `regenerate [--from STEP]`,
