@@ -9,7 +9,7 @@ tickets, MAC addresses, hostnames, the contents of anything under `EFI/APPLE`, o
 from `/var/lib/t1-revive/private/`. The report bundle is designed so that you do not have
 to think about this; paste it and nothing else.
 
-If you work with an agent, point it at [../skills/tester/SKILL.md](../skills/tester/SKILL.md).
+If you work with an agent, point it at [../skills/t1-revive-tester/SKILL.md](../skills/t1-revive-tester/SKILL.md).
 It follows this checklist and does not skip the confirmations.
 
 ## Before

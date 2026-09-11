@@ -14,19 +14,19 @@ With the [skills CLI](https://github.com/vercel-labs/skills), which discovers sk
 under `skills/<name>/SKILL.md` in a repository:
 
 ```bash
-npx skills add niconistal/t1-revive@tester            # this skill only
-npx skills add niconistal/t1-revive --skill tester -g # same, into your user directory
+npx skills add niconistal/t1-revive@t1-revive-tester            # this skill only
+npx skills add niconistal/t1-revive --skill t1-revive-tester -g # same, into your user directory
 ```
 
-Add `-a claude-code` or `-a codex` to target one agent. If the `@tester` form does not
-resolve on your version of the CLI, the `--skill tester` form does.
+Add `-a claude-code` or `-a codex` to target one agent. If the `@t1-revive-tester` form does not
+resolve on your version of the CLI, the `--skill t1-revive-tester` form does.
 
 Manually, for Claude Code:
 
 ```bash
 git clone https://github.com/niconistal/t1-revive
 mkdir -p ~/.claude/skills
-cp -r t1-revive/skills/tester ~/.claude/skills/t1-revive-tester
+cp -r t1-revive/skills/t1-revive-tester ~/.claude/skills/t1-revive-tester
 ```
 
 For Codex, copy the same directory to `~/.codex/skills/t1-revive-tester` (user-wide) or

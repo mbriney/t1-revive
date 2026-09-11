@@ -21,7 +21,7 @@ are, and what happens with a report.
    or types on your behalf. The README, `docs/`, and the tester skill carry the guide's
    role. If something is unclear enough that you would want a call, that is a
    documentation bug: file it.
-2. **Your own agent is the guide.** Install the [tester skill](skills/tester/README.md)
+2. **Your own agent is the guide.** Install the [tester skill](skills/t1-revive-tester/README.md)
    into the coding agent you already use. It reads the machine, explains the state,
    names the documented next step, and files the report under your login after you have
    read it. It is forbidden from running the device-touching commands for you; you type

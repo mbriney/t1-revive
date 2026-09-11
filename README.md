@@ -168,7 +168,7 @@ been tested by us; one machine.
 
 Read [TESTING.md](TESTING.md) and the checklist in
 [docs/hardware-validation.md](docs/hardware-validation.md). If you work with an agent,
-point it at [skills/tester/SKILL.md](skills/tester/SKILL.md); it guides a run without
+point it at [skills/t1-revive-tester/SKILL.md](skills/t1-revive-tester/SKILL.md); it guides a run without
 skipping the confirmations. When something fails, or works on a new model, open an issue with
 the output of:
 
