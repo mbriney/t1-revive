@@ -176,8 +176,14 @@ firmware_ensure() {
   else
     [[ -f "$pkg" ]] && { warn "cached package fails verification; downloading again"; rm -f -- "$pkg"; }
     if [[ "${T1R_DRY_RUN:-0}" = 1 ]]; then
-      note "dry run: would download $T1R_FIRMWARE_URL"
-      note "dry run: to $pkg, then verify sha256 $T1R_FIRMWARE_SHA256 and extract into $cache/firmware"
+      # Every step asks for the bundle; say the whole thing once per run, then one line.
+      if [[ "${_fw_dry_noted:-0}" = 1 ]]; then
+        note "(dry) firmware bundle: would be downloaded and verified as above"
+      else
+        note "dry run: would download $T1R_FIRMWARE_URL"
+        note "dry run: to $pkg, then verify sha256 $T1R_FIRMWARE_SHA256 and extract into $cache/firmware"
+        _fw_dry_noted=1
+      fi
       diag step=firmware result=skipped reason=dry-run
       return 0
     fi

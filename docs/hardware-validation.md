@@ -38,7 +38,7 @@ a yes.
 
 ## During
 
-Run `sudo t1-revive regenerate` and answer each confirmation yourself. Record the T1's USB
+Run `sudo t1-revive regenerate --confirm-each` and answer each confirmation yourself. Record the T1's USB
 state at each step as the tool reports it. Note the wall-clock time of each step.
 
 | Step | Expected | Observed (state, time, exit) |

@@ -38,7 +38,8 @@ subcommands
   help                              this text
 
 global flags (before the subcommand)
-  --no-confirm   do not ask before device-touching steps       (T1R_NO_CONFIRM=1)
+  --no-confirm   ask nothing (default: once before starting, once before writing the ESP) (T1R_NO_CONFIRM=1)
+  --confirm-each also ask before every device-touching step   (T1R_CONFIRM_EACH=1)
   --demo         on-camera mode: generic lines on screen, details to the log; implies --no-confirm (T1R_DEMO=1)
   --dry-run      print what would happen; no device, ESP or network writes (T1R_DRY_RUN=1)
   --state DIR    private state directory (default /var/lib/t1-revive)  (T1R_STATE)
@@ -56,6 +57,7 @@ EOF
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --no-confirm) export T1R_NO_CONFIRM=1;;
+    --confirm-each) export T1R_CONFIRM_EACH=1;;
     --demo) export T1R_DEMO=1 T1R_NO_CONFIRM=1;;
     --dry-run) export T1R_DRY_RUN=1;;
     --state) [[ $# -ge 2 ]] || { usage >&2; exit 2; }; export T1R_STATE=$2; shift;;

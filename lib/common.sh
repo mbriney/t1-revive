@@ -36,6 +36,7 @@ fi
 : "${T1R_DMI:=$T1R_SYSFS/class/dmi/id}"
 : "${T1R_ACPI_TABLES:=$T1R_SYSFS/firmware/acpi/tables}"
 : "${T1R_NO_CONFIRM:=0}"
+: "${T1R_CONFIRM_EACH:=0}"  # 1: also ask before every device-touching step (default: start + ESP write)
 : "${T1R_DEMO:=0}"
 : "${T1R_DRY_RUN:=0}"
 : "${T1R_STRICT:=0}"
@@ -45,7 +46,7 @@ fi
 : "${T1R_NO_JOURNAL:=0}"   # 1: diag lines stay in the log files and never reach the journal (test suite)
 : "${T1R_COLOR:=}"         # 1 when the terminal takes colours (decided in open_log / on demand)
 export T1R_ROOT T1R_PREFIX T1R_STATE T1R_LOG T1R_CACHE T1R_CONF T1R_SYSFS T1R_DMI T1R_ACPI_TABLES
-export T1R_NO_CONFIRM T1R_DEMO T1R_DRY_RUN T1R_COMPONENT
+export T1R_NO_CONFIRM T1R_CONFIRM_EACH T1R_DEMO T1R_DRY_RUN T1R_COMPONENT T1R_NO_JOURNAL
 
 # ----- output --------------------------------------------------------------------------
 # Screen/log model (from one-shot.sh):
@@ -95,14 +96,31 @@ die() {
   exit "$code"
 }
 
+# confirm QUESTION: a prompt block that stands out from the step output:
+#
+#      ? write to the ESP
+#        Press Enter to continue, or Ctrl-C to stop.
+#
+# Only complete lines (the sed|tee filter passes nothing else). --no-confirm and --demo skip it.
 confirm() {
   [[ "$T1R_NO_CONFIRM" = 1 ]] && return 0
   [[ "$T1R_DEMO" = 1 ]] && return 0
-  # A full line with a newline: the sed|tee filter only passes complete lines.
-  show "   >> ${1:-continue?} [Enter to continue, Ctrl-C to stop]"
-  if [[ -r /dev/tty ]]; then read -r _ </dev/tty || die 4 "no answer on the terminal; use --no-confirm for unattended runs"
+  local q=${1:-continue?}
+  show ""
+  if _t1r_color; then show "$(printf '   \e[1;33m?\e[0m \e[1m%s\e[0m' "$q")"; else show "   ? $q"; fi
+  show "     Press Enter to continue, or Ctrl-C to stop."
+  if ( : </dev/tty ) 2>/dev/null; then read -r _ </dev/tty || die 4 "no answer on the terminal; use --no-confirm for unattended runs"
   else read -r _ || die 4 "no terminal to confirm on; use --no-confirm for unattended runs"; fi
+  show ""
   return 0
+}
+
+# confirm_each QUESTION: the per-step question; asked only with --confirm-each (T1R_CONFIRM_EACH=1).
+# The default run asks twice: once before it starts (the whole plan is printed first) and once
+# before the ESP is written. Nine questions in a row taught nobody anything.
+confirm_each() {
+  [[ "$T1R_CONFIRM_EACH" = 1 ]] || return 0
+  confirm "$@"
 }
 
 # ----- redaction -----------------------------------------------------------------------

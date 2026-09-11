@@ -37,8 +37,10 @@ are, and what happens with a report.
    fingerprint with t1bridge, keep a root shell open and test the password fallback for
    `sudo` and the lock screen before you close it. On Omarchy the exact PAM lines and that
    warning are in [docs/omarchy.md](docs/omarchy.md).
-5. **Confirmations stay on.** `--no-confirm` and `--demo` exist for the maintainer's
-   rehearsals and recordings. A tester never uses them.
+5. **Confirmations stay on.** The tool asks before it starts and before it writes the ESP;
+   `--confirm-each` asks before every device step if you want to follow along step by step.
+   `--no-confirm` and `--demo` exist for the maintainer's rehearsals and recordings. A tester
+   never uses them.
 6. **Full power cycle means shutdown**, wait 20-30 seconds, power on. A reboot leaves
    the T1 where it was. Every fallback in the tool assumes the real thing.
 7. **No identifiers, ever.** Serial numbers, ECIDs, nonces, tickets, anything from

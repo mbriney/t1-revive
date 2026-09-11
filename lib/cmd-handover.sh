@@ -40,7 +40,7 @@ cmd_handover() {
   note "t1bridge is installed: re-enumerating the T1 so its configuration selector takes it (no reboot)"
   [ "${T1R_DEMO:-0}" = 1 ] && show "  Handing the Touch Bar to its driver"
   dry_q modprobe t1_cfgsel || true
-  confirm "re-enumerate the T1 (${dev##*/})"
+  confirm_each "re-enumerate the T1 (${dev##*/})"
   dry_write "$dev/authorized" '%s\n' 0; dry_sleep 2
   for m in apple_touchbar apple_ibridge; do
     if dry_q modprobe -r "$m"; then note "unloaded firmware-bar driver $m"; fi

@@ -6,13 +6,28 @@ MacBookPro14,3.
 
 ## Unreleased
 
+Hardware-gate day fixes (2026-09-11, found while running the gate checklist on the 14,3):
+
+- `build.sh` reconfigures a vendor checkout whose Makefile targets another prefix instead of
+  reusing it (it used to "install" into a vanished directory and exit 0 with an empty `prefix/`)
+- the bats suite no longer writes `t1-revive-diagnostic` lines to the system journal
+  (`T1R_NO_JOURNAL=1`); `report` and `status` ignore leftover `component=test` lines
+- `preflight` greps the idevicerestore binary directly for the T1 marker: `strings | grep -q`
+  died of SIGPIPE under `pipefail` on the real binary and reported the patched build as unpatched
+- package installs hand pacman only the missing packages (no "is up to date -- skipping" noise)
+- confirmations: the plan is printed and confirmed once, the ESP write once more;
+  `--confirm-each` restores a question before every device-touching step; the prompt is a
+  distinct block with the Enter/Ctrl-C instruction on its own line
+- dry runs: the resets are labelled as steps 2/7 and 4/7, the recovery guard does not repeat the
+  reset before every step, the stage preview prints once, the firmware download note prints once
+
 Initial public version, derived from the private notebook scripts (`one-shot.sh`,
 `pass-a.sh`, `pass-b.sh`, `phase14.sh`, `stage-esp.sh`, `frst-test.sh`, `regen-preflight.sh`,
 the toolkit and install-stick builders) with a clean history:
 
 - pre-hardware review fixes: the reset method is never guessed among several FRST methods
   (`T1R_FRST_METHOD` pins one), the ESP mounted at `/boot` or `/efi` wins over a stick that
-  holds `EFI/APPLE`, ESP-selection failures stop the run, every device-touching step confirms,
+  holds `EFI/APPLE`, ESP-selection failures stop the run, the run and the ESP write are confirmed,
   stale step markers are invalidated, contract exit codes survive step failures
 - step gates match the proven run by default (artefacts present; `8600` after the boot step's watch);
   `--strict` adds idevicerestore exit-status and full 30 s stability requirements

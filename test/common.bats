@@ -199,6 +199,26 @@ setup() { t1r_env; }
   assert_contains "$output" done
 }
 
+@test "confirm: prints a prompt block (question line + Enter/Ctrl-C line) and reads one line" {
+  t1r_load; t1r_need confirm
+  run timeout 5 setsid --wait bash -c 'source "$T1R_ROOT/lib/common.sh"; T1R_NO_CONFIRM=0 T1R_COLOR=0 confirm "write to the ESP" && echo answered' <<<""
+  assert_status 0
+  assert_contains "$output" "   ? write to the ESP"
+  assert_contains "$output" "     Press Enter to continue, or Ctrl-C to stop."
+  assert_contains "$output" answered
+}
+
+@test "confirm_each: silent without T1R_CONFIRM_EACH, asks with it" {
+  t1r_load; t1r_need confirm_each
+  run timeout 5 setsid --wait bash -c 'source "$T1R_ROOT/lib/common.sh"; T1R_NO_CONFIRM=0 T1R_COLOR=0 confirm_each "step?" && echo silent' </dev/null
+  assert_status 0
+  assert_eq silent "$output"
+  run timeout 5 setsid --wait bash -c 'source "$T1R_ROOT/lib/common.sh"; T1R_NO_CONFIRM=0 T1R_CONFIRM_EACH=1 T1R_COLOR=0 confirm_each "step?" && echo asked' <<<""
+  assert_status 0
+  assert_contains "$output" "   ? step?"
+  assert_contains "$output" asked
+}
+
 @test "sourcing lib/common.sh has no side effects (no output, no exit)" {
   [[ -f $T1R_REPO/lib/common.sh ]] || skip "lib/common.sh not present"
   run bash -c 'source "$T1R_ROOT/lib/common.sh"; echo sourced-ok'

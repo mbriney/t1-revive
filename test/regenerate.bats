@@ -123,7 +123,9 @@ regen_load() {
     T1R_NO_CONFIRM=0 cmd_regenerate' </dev/null
   assert_status 4
   assert_contains "$output" "no off-disk backup"
-  assert_contains "$output" "replace the existing Apple data"
+  assert_contains "$output" "replacing the existing files"
+  assert_contains "$output" "? start the regeneration at 'provision' and replace the existing Apple data"
+  assert_contains "$output" "Press Enter to continue, or Ctrl-C to stop."
   t1r_esp_unchanged
   t1r_no_step_markers
 }
@@ -180,6 +182,20 @@ regen_load() {
     [[ $line == "idevicerestore --version" ]] || {
       echo "unexpected call to the patched stack: $line" >&2; return 1; }
   done <<<"$(t1r_calls)"
+}
+
+@test "regenerate: a full dry run labels all seven steps, resets once per reset step, previews stage once" {
+  regen_load
+  t1r_run cmd_regenerate
+  assert_status 0
+  assert_contains "$output" "==== plan"
+  assert_contains "$output" "regenerate will:"
+  for s in "step 1/7" "step 2/7 · reset" "step 3/7" "step 4/7 · reset" "step 5/7" "step 6/7" "step 7/7"; do
+    assert_contains "$output" "$s"
+  done
+  # the dry T1 never leaves 'booted': the guard must not print a second reset before each step
+  assert_eq 2 "$(grep -c '^==== reset: ' <<<"$output")"
+  assert_eq 1 "$(grep -c '^==== stage: staging' <<<"$output")"
 }
 
 @test "regenerate: --from stage skips the earlier steps" {
