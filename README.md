@@ -1,21 +1,25 @@
 <div align="center">
 
-# t1-revive
+<img src="docs/assets/hero.svg" alt="t1-revive: Touch Bar, camera and Touch ID back on a 2016 or 2017 MacBook Pro, from Linux alone" width="100%">
+
+<br>
 
 **Regenerates the Apple T1 firmware data of a 2016 or 2017 Touch Bar MacBook Pro, from Linux alone.**
 
 [![ci](https://github.com/niconistal/t1-revive/actions/workflows/ci.yml/badge.svg)](https://github.com/niconistal/t1-revive/actions/workflows/ci.yml)
-[![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
-[![tested: MacBookPro14,3](https://img.shields.io/badge/tested_on-MacBookPro14%2C3-success.svg)](#tested)
-[![shell: bash](https://img.shields.io/badge/shell-bash-4EAA25.svg?logo=gnubash&logoColor=white)](#upstream-status)
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-3b82f6.svg?logo=opensourceinitiative&logoColor=white)](LICENSE)
+[![Arch Linux](https://img.shields.io/badge/Arch_Linux-based-1793d1.svg?logo=archlinux&logoColor=white)](#-requirements)
+[![tested: MacBookPro14,3](https://img.shields.io/badge/tested_on-MacBookPro14%2C3-22c55e.svg?logo=apple&logoColor=white)](#-tested)
+[![shell: bash](https://img.shields.io/badge/bash-shellcheck_%2B_bats-4EAA25.svg?logo=gnubash&logoColor=white)](#-upstream-status)
+[![companion: t1bridge](https://img.shields.io/badge/companion-t1bridge-a855f7.svg?logo=fingerprint&logoColor=white)](https://github.com/standardagents/t1bridge)
 
-[Requirements](#requirements) ·
-[Install](#install) ·
-[The flow](#the-flow) ·
-[Apple and your disk](#what-talks-to-apple-and-what-is-stored-where) ·
-[After it works](#after-it-works) ·
-[Testing](#testing-and-reporting) ·
-[Credits](#credits)
+[📋 Requirements](#-requirements) ·
+[📦 Install](#-install) ·
+[🚀 The flow](#-the-flow) ·
+[🔐 Apple and your disk](#-what-talks-to-apple-and-what-is-stored-where) ·
+[✨ After it works](#-after-it-works) ·
+[🧪 Testing](#-testing-and-reporting) ·
+[💛 Credits](#-credits)
 
 </div>
 
@@ -53,19 +57,19 @@ Touch ID.
 >   including from a fresh install. That is evidence, not coverage.
 > - The tool never calls the ACPI method `SOCW`. The only T1 reset it uses is `FRST`.
 
-## Tested
+## ✅ Tested
 
 | Model | Date | Restore | Touch ID | Tester |
 | :--- | :--- | :---: | :---: | :--- |
-| **MacBookPro14,3** | 2026-09-03 restore · 2026-09-06 Touch ID · 2026-09-07 rehearsals · 2026-09-09 fresh install | ✅ | ✅ persists across reboot | @niconistal (maintainer) |
-| MacBookPro14,2 | | ⬜ untested | ⬜ untested | *your report here* |
-| MacBookPro13,3 | | ⬜ untested | ⬜ untested | *your report here* |
-| MacBookPro13,2 | | ⬜ untested | ⬜ untested | *your report here* |
+| **MacBookPro14,3** | 2026-09-03 restore · 2026-09-06 Touch ID · 2026-09-07 rehearsals · 2026-09-09 fresh install | 🟢 | 🟢 persists across reboot | @niconistal (maintainer) |
+| MacBookPro14,2 | | ⚪ untested | ⚪ untested | *your report here* |
+| MacBookPro13,3 | | ⚪ untested | ⚪ untested | *your report here* |
+| MacBookPro13,2 | | ⚪ untested | ⚪ untested | *your report here* |
 
 A confirmed run on any model becomes a row here with your
-handle if you want it there. See [Testing and reporting](#testing-and-reporting).
+handle if you want it there. See [Testing and reporting](#-testing-and-reporting).
 
-## Requirements
+## 📋 Requirements
 
 - **A T1 MacBook Pro** from the list above, with the T1 in recovery mode: `lsusb` shows
   `05ac:1281 Apple, Inc. Mobile Device (Recovery Mode)` instead of `05ac:8600`.
@@ -74,13 +78,13 @@ handle if you want it there. See [Testing and reporting](#testing-and-reporting)
   packaging help is welcome.
 - **Root through `sudo`, mains power, and a network path to Apple:** `gs.apple.com` and
   `swcdn.apple.com` over HTTPS. A fresh install on the 2017 15-inch can come up with no
-  Wi-Fi at all; see the [appendix](#appendix-installing-with-no-network) at the end of this
+  Wi-Fi at all; see the [appendix](#-appendix-installing-with-no-network) at the end of this
   page.
 - **Kernel headers** for the running kernel and `acpi_call-dkms`. Preflight installs them and
   tells you to reboot if the kernel changed (exit code 7).
 - **No system `usbmuxd` running.** Preflight checks.
 
-## Install
+## 📦 Install
 
 <table>
 <tr>
@@ -111,13 +115,27 @@ Those two are the install path. Nothing from Apple is in the repository or the p
 The firmware package `EmbeddedOSFirmware.pkg` is downloaded from Apple's CDN at run time
 and checked against a pinned checksum.
 
-## The flow
+## 🚀 The flow
 
 ```sh
 sudo t1-revive preflight                    # 1. read-only checks; installs the few packages
 sudo t1-revive backup --to PATH             # 2. recommended; copies EFI/APPLE off this disk if it exists
 sudo t1-revive regenerate                   # 3. provision, reset, personalize, reset, boot, stage, handover
 ```
+
+```mermaid
+flowchart LR
+    A[provision]:::apple --> B[reset]:::device --> C[personalize]:::apple --> D[reset]:::device
+    D --> E[boot]:::device --> F[stage]:::disk --> G[handover]:::bridge
+    classDef apple  fill:#fb923c,stroke:#c2410c,color:#1c1917,font-weight:bold
+    classDef device fill:#38bdf8,stroke:#0369a1,color:#0c1a24,font-weight:bold
+    classDef disk   fill:#4ade80,stroke:#15803d,color:#052e16,font-weight:bold
+    classDef bridge fill:#c084fc,stroke:#7e22ce,color:#1e0a2e,font-weight:bold
+```
+
+<p align="center"><sub>
+🟠 talks to Apple's servers &nbsp;·&nbsp; 🔵 touches the T1 only &nbsp;·&nbsp; 🟢 writes the ESP &nbsp;·&nbsp; 🟣 hands the booted T1 to t1bridge
+</sub></p>
 
 **1. Preflight** runs read-only checks and installs the few packages the restore needs.
 
@@ -167,7 +185,7 @@ later does not repeat the provision step. The T1 cannot end up worse than recove
 which is where it started. [docs/troubleshooting.md](docs/troubleshooting.md) is organised
 by symptom and exit code.
 
-## What talks to Apple, and what is stored where
+## 🔐 What talks to Apple, and what is stored where
 
 ### Network
 
@@ -199,7 +217,7 @@ and what someone with the state directory could do.
 > After it works, copy the new `EFI/APPLE` folder off this disk, encrypted, and keep it. A
 > reinstall is exactly the event that destroys it.
 
-## After it works
+## ✨ After it works
 
 - **[t1bridge](https://github.com/standardagents/t1bridge)** by Andrew Boyd: Touch Bar,
   camera, Touch ID, with the Secure Enclave doing the matching. Touch ID enrolls on
@@ -214,7 +232,7 @@ and what someone with the state directory could do.
 > stack; the ambient light sensor is not available under t1bridge; the camera under t1bridge
 > has not been tested by us; one machine.
 
-## Testing and reporting
+## 🧪 Testing and reporting
 
 Read [TESTING.md](TESTING.md) and the checklist in
 [docs/hardware-validation.md](docs/hardware-validation.md). If you work with an agent,
@@ -234,7 +252,7 @@ you to paste.
 > Never paste serial numbers, ECIDs, nonces, tickets, MAC addresses, restore logs from the
 > private directory, or the contents of anything under `EFI/APPLE`.
 
-## Upstream status
+## 🔀 Upstream status
 
 t1-revive builds three patched libimobiledevice components because upstream has no
 iBridge1,1 (Apple T1) restore support yet. The patches are exact diffs against pinned
@@ -258,7 +276,7 @@ Related contributions to the projects around this tool:
 | standardagents/t1bridge | bplist offset widths 1 to 8 bytes (the width the T1 writes) | [#16](https://github.com/standardagents/t1bridge/pull/16) · merged, shipped in 0.1.6 |
 | standardagents/t1bridge | issues from this work | [#21](https://github.com/standardagents/t1bridge/issues/21) failed keybag unit blocks enrollment · [#22](https://github.com/standardagents/t1bridge/issues/22) document the no-reboot handover · data points on [#14](https://github.com/standardagents/t1bridge/issues/14) |
 
-## Credits
+## 💛 Credits
 
 - **Andrew Boyd**, for [t1bridge](https://github.com/standardagents/t1bridge) and for saying
   early and loudly "back up your EFI partition". This tool exists to produce the file his
@@ -271,13 +289,13 @@ Contributions: [CONTRIBUTING.md](CONTRIBUTING.md) ·
 Security reports: [SECURITY.md](SECURITY.md) ·
 Changes: [CHANGELOG.md](CHANGELOG.md)
 
-## Licence
+## 📄 Licence
 
 MIT for everything authored in this repository. The patches and build recipes under
 `vendor/` apply to idevicerestore and libirecovery (LGPL-2.1) and usbmuxd (GPL) and stay under
 those licences; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-## Appendix: installing with no network
+## 📎 Appendix: installing with no network
 
 <details>
 <summary>For the 2017 15-inch that comes up with no Wi-Fi after a fresh install</summary>

@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="330" viewBox="0 0 1200 330" role="img" aria-label="t1-revive: the Touch Bar of a 2016 or 2017 MacBook Pro coming back to life under Linux">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1022"/>
+      <stop offset="1" stop-color="#1c1447"/>
+    </linearGradient>
+    <linearGradient id="spectrum" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff5f6d"/>
+      <stop offset="0.3" stop-color="#ffb35c"/>
+      <stop offset="0.55" stop-color="#3ddc97"/>
+      <stop offset="0.8" stop-color="#36c5f0"/>
+      <stop offset="1" stop-color="#7b6cff"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#c7d2ff"/>
+    </linearGradient>
+    <radialGradient id="orb" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#3ddc97" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#3ddc97" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-10%" y="-300%" width="120%" height="700%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="30"/>
+    </filter>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="330" rx="26" fill="url(#bg)"/>
+  <circle cx="1010" cy="60" r="150" fill="#7b6cff" opacity="0.18" filter="url(#soft)"/>
+  <circle cx="220" cy="300" r="130" fill="#36c5f0" opacity="0.14" filter="url(#soft)"/>
+
+  <!-- title -->
+  <text x="80" y="128" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="84" font-weight="800" letter-spacing="-3" fill="url(#title)">t1-revive</text>
+  <text x="84" y="172" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" fill="#aab4d6">Touch Bar, camera and Touch ID back on a 2016 or 2017 MacBook Pro. From Linux alone.</text>
+
+  <!-- model pill -->
+  <g transform="translate(80 196)">
+    <rect width="470" height="34" rx="17" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.14"/>
+    <text x="18" y="22" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15" fill="#dfe5ff">MacBookPro13,2 · 13,3 · 14,2 · 14,3</text>
+    <circle cx="410" cy="17" r="5" fill="#3ddc97"/>
+    <text x="422" y="22" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#3ddc97">Apple T1</text>
+  </g>
+
+  <!-- the Touch Bar: glow, then the strip -->
+  <rect x="80" y="262" width="1040" height="30" rx="15" fill="url(#spectrum)" opacity="0.75" filter="url(#glow)"/>
+  <rect x="80" y="258" width="1040" height="38" rx="12" fill="#05060d" stroke="#ffffff" stroke-opacity="0.12"/>
+
+  <!-- esc key -->
+  <rect x="92" y="266" width="64" height="22" rx="6" fill="#ffffff" fill-opacity="0.10"/>
+  <text x="124" y="282" text-anchor="middle" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#c9d0ea">esc</text>
+
+  <!-- app strip: the colour coming back -->
+  <rect x="172" y="266" width="560" height="22" rx="6" fill="url(#spectrum)" opacity="0.92"/>
+  <g fill="#05060d" fill-opacity="0.35">
+    <rect x="186" y="270" width="70" height="14" rx="4"/>
+    <rect x="266" y="270" width="110" height="14" rx="4"/>
+    <rect x="386" y="270" width="150" height="14" rx="4"/>
+    <rect x="546" y="270" width="80" height="14" rx="4"/>
+    <rect x="636" y="270" width="82" height="14" rx="4"/>
+  </g>
+
+  <!-- control strip -->
+  <g>
+    <rect x="750" y="266" width="44" height="22" rx="6" fill="#36c5f0" fill-opacity="0.85"/>
+    <rect x="802" y="266" width="44" height="22" rx="6" fill="#ffb35c" fill-opacity="0.85"/>
+    <rect x="854" y="266" width="44" height="22" rx="6" fill="#ff5f6d" fill-opacity="0.85"/>
+    <rect x="906" y="266" width="44" height="22" rx="6" fill="#7b6cff" fill-opacity="0.85"/>
+    <g fill="#05060d" fill-opacity="0.55">
+      <rect x="766" y="273" width="12" height="8" rx="2"/>
+      <rect x="818" y="273" width="12" height="8" rx="2"/>
+      <rect x="870" y="273" width="12" height="8" rx="2"/>
+      <rect x="922" y="273" width="12" height="8" rx="2"/>
+    </g>
+  </g>
+
+  <!-- Touch ID -->
+  <g transform="translate(1078 277)">
+    <circle r="34" fill="url(#orb)" opacity="0.7"/>
+    <circle r="15" fill="#0a0c18" stroke="#3ddc97" stroke-width="1.5" stroke-opacity="0.9"/>
+    <g fill="none" stroke="#3ddc97" stroke-width="1.6" stroke-linecap="round" opacity="0.95">
+      <path d="M -8 3 A 8.5 8.5 0 0 1 8 3"/>
+      <path d="M -5 6 A 5 5 0 0 1 5 6"/>
+      <path d="M -2 8 A 2 2 0 0 1 2 8"/>
+      <path d="M -10 -1 A 11 11 0 0 1 10 -1"/>
+    </g>
+  </g>
+</svg>
