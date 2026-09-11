@@ -1,0 +1,25 @@
+t1-revive vendored patch (leading text before the first "diff --git" is ignored by git apply and GNU patch)
+Project:      usbmuxd
+Upstream:     https://github.com/libimobiledevice/usbmuxd
+Base commit:  3ded00c9985a5108cfc7591a309f9a23d57a8cba
+Licence:      GPL-2.0-only OR GPL-3.0-only (source headers: 'either version 2 or version 3'; COPYING.GPLv2 and COPYING.GPLv3 ship in the tree). This patch is offered under the same terms.
+Description:
+  One-line change in usb_init(): the libusb hotplug callback is registered with dev_class
+  LIBUSB_HOTPLUG_MATCH_ANY instead of 0, so usbmuxd receives arrival/departure events for Apple
+  (VID 05ac) devices of any USB device class. t1-revive carries it because the private usbmuxd must
+  pick up the T1 when it re-enumerates during the restore.
+Regenerate:   git -C <checkout> -c diff.mnemonicPrefix=false diff HEAD   (base commit checked out, patch applied in the worktree)
+
+diff --git a/src/usb.c b/src/usb.c
+index d0e9afc..523bfb0 100644
+--- a/src/usb.c
++++ b/src/usb.c
+@@ -1060,7 +1060,7 @@ int usb_init(void)
+ #ifdef HAVE_LIBUSB_HOTPLUG_API
+ 	if (libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG)) {
+ 		usbmuxd_log(LL_INFO, "Registering for libusb hotplug events");
+-		res = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, LIBUSB_HOTPLUG_ENUMERATE, VID_APPLE, LIBUSB_HOTPLUG_MATCH_ANY, 0, usb_hotplug_cb, NULL, &usb_hotplug_cb_handle);
++		res = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, LIBUSB_HOTPLUG_ENUMERATE, VID_APPLE, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, usb_hotplug_cb, NULL, &usb_hotplug_cb_handle);
+ 		if (res == LIBUSB_SUCCESS) {
+ 			device_polling = 0;
+ 		} else {

@@ -1,0 +1,175 @@
+# Maintainer: the t1-revive project <https://github.com/niconistal/t1-revive>
+#
+# t1-revive regenerates the Apple T1 (iBridge) firmware data of a 2016/2017 Touch Bar
+# MacBook Pro from Linux. This package ships the tool plus the patched libimobiledevice
+# stack it drives, built into a private prefix under /usr/lib/t1-revive/prefix.
+#
+# Nothing from Apple is downloaded, built or installed here: the EmbeddedOS firmware is
+# fetched from Apple's CDN at run time by the tool itself and verified against a pinned
+# checksum. Everything device-specific stays in /var/lib/t1-revive on the user's machine.
+#
+# The pinned upstream commits, versions, licences and tarball checksums are NOT duplicated
+# here - they are read from the project's vendor/refs.env, which is the single source of
+# truth. Keep a copy of that file next to this PKGBUILD when publishing to the AUR
+# (see README.md in this directory); prepare() verifies it against the release tarball.
+
+pkgname=t1-revive
+# VERSION says 0.1.0-dev; pkgver may not contain '-'.
+_relver=0.1.0-dev
+pkgver=0.1.0.dev
+pkgrel=1
+pkgdesc="Regenerate the Apple T1 (iBridge) firmware data of a Touch Bar MacBook Pro from Linux"
+arch=('x86_64')
+url="https://github.com/niconistal/t1-revive"
+# MIT: t1-revive itself. The rest are the vendored libimobiledevice components, whose
+# licence texts are installed under /usr/share/licenses/t1-revive/vendor/.
+license=('MIT' 'LGPL-2.1-only' 'LGPL-2.1-or-later' 'LGPL-3.0-or-later'
+         'GPL-2.0-only' 'GPL-2.0-or-later' 'GPL-3.0-only')
+depends=('libzip' 'libusb' 'curl' 'openssl' 'readline' 'zlib'
+         'acpi_call-dkms' 'linux-headers' 'python' 'jq' 'util-linux')
+makedepends=('autoconf' 'automake' 'libtool' 'pkgconf' 'patch' 'patchelf')
+optdepends=('acpica: decode ACPI tables by hand when the FRST method is not found'
+            'bats: run the test suite from the installed tree')
+options=('!lto')
+backup=('etc/t1-revive/t1-revive.conf')
+
+_srcdir="$pkgname-$_relver"
+
+# --- pinned vendored sources, from vendor/refs.env ---------------------------------------
+# Parse time: prefer a copy next to the PKGBUILD (AUR), fall back to the in-tree path
+# (packaging/arch/ inside a t1-revive checkout).
+_refs=
+for _c in "$startdir/refs.env" "$startdir/../../vendor/refs.env"; do
+	[ -r "$_c" ] && { _refs=$_c; break; }
+done
+[ -n "$_refs" ] || {
+	echo "PKGBUILD: vendor/refs.env not found (copy it next to this PKGBUILD)" >&2
+	return 1
+}
+# shellcheck source=/dev/null
+. "$_refs"
+
+_ref() { local v=${1^^}; v=${v//-/_}_$2; printf '%s' "${!v-}"; }
+
+# The project tarball. 'SKIP' until the release tag exists; run `updpkgsums` at tagging time.
+source=("$_srcdir.tar.gz::$url/archive/refs/tags/v$_relver.tar.gz")
+sha256sums=('SKIP')
+# One upstream commit tarball per vendored component, so build() never touches the network.
+for _c in $T1R_VENDOR_ORDER; do
+	source+=("$_c-$(_ref "$_c" BASE_COMMIT).tar.gz::$(_ref "$_c" UPSTREAM_URL)/archive/$(_ref "$_c" BASE_COMMIT).tar.gz")
+	sha256sums+=("$(_ref "$_c" TARBALL_SHA256)")
+done
+unset _c
+
+prepare() {
+	cd "$srcdir/$_srcdir"
+
+	# The VERSION file and this PKGBUILD must agree.
+	[ "$(cat VERSION)" = "$_relver" ] || {
+		echo "PKGBUILD: VERSION is $(cat VERSION), expected $_relver" >&2
+		return 1
+	}
+	# The refs.env parsed above must be the one that ships in the release.
+	cmp -s "$_refs" vendor/refs.env || {
+		echo "PKGBUILD: the refs.env next to the PKGBUILD differs from vendor/refs.env in the release" >&2
+		return 1
+	}
+
+	# Pre-populate vendor/src so build.sh --offline never clones. build.sh detects an unpacked
+	# tree (no .git), applies the patch with GNU patch, and uses RELEASE_VERSION from refs.env
+	# so every binary reports the same --version as a git build.
+	mkdir -p vendor/src
+	local _c _commit
+	for _c in $T1R_VENDOR_ORDER; do
+		_commit=$(_ref "$_c" BASE_COMMIT)
+		rm -rf "vendor/src/$_c"
+		mv "$srcdir/$_c-$_commit" "vendor/src/$_c"
+	done
+}
+
+build() {
+	cd "$srcdir/$_srcdir"
+	# --offline: every source is already in vendor/src. The prefix is relocated in package().
+	bash build.sh --offline --prefix "$srcdir/prefix" --jobs "$(nproc)"
+}
+
+check() {
+	cd "$srcdir"
+	local _libs="$srcdir/prefix/lib:$srcdir/prefix/lib64"
+	LD_LIBRARY_PATH=$_libs "$srcdir/prefix/bin/idevicerestore" --version
+	LD_LIBRARY_PATH=$_libs "$srcdir/prefix/bin/irecovery" --version
+	LD_LIBRARY_PATH=$_libs "$srcdir/prefix/bin/plistutil" --version
+	LD_LIBRARY_PATH=$_libs "$srcdir/prefix/sbin/usbmuxd" --version
+	# The T1 patches must actually be in the binary that will be shipped.
+	strings "$srcdir/prefix/bin/idevicerestore" | grep -q 'T1: EmbeddedOS restore options applied'
+	strings "$srcdir/prefix/lib/libirecovery-1.0.so.5" | grep -q 'iBridge1,1'
+}
+
+package() {
+	local _root="$pkgdir/usr/lib/$pkgname"
+	local _runpath="/usr/lib/$pkgname/prefix/lib"
+	cd "$srcdir/$_srcdir"
+
+	# 1. the tool
+	install -d "$_root"
+	local _item
+	for _item in bin lib tools contrib skills; do
+		cp -a -- "$_item" "$_root/$_item"
+	done
+	install -Dm644 VERSION "$_root/VERSION"
+	find "$_root" \( -name '__pycache__' -o -name '*.pyc' -o -name '*.log' \) -prune -exec rm -rf -- {} +
+	install -d "$pkgdir/usr/bin"
+	ln -s "/usr/lib/$pkgname/bin/t1-revive" "$pkgdir/usr/bin/t1-revive"
+
+	# 2. the patched libimobiledevice stack, in its own prefix
+	cp -a -- "$srcdir/prefix" "$_root/prefix"
+	# libtool archives and static libraries carry $srcdir paths and are of no use at run time.
+	find "$_root/prefix" \( -name '*.la' -o -name '*.a' \) -delete
+	# libtool baked the build prefix into the RUNPATH of every binary and shared library;
+	# point it at the installed location instead.
+	local _f
+	while IFS= read -r -d '' _f; do
+		patchelf --set-rpath "$_runpath" "$_f" 2>/dev/null || true
+	done < <(find "$_root/prefix" -type f \( -perm -u+x -o -name '*.so*' \) -print0)
+	# The pkg-config files and the private udev rule spell the build prefix out in text.
+	find "$_root/prefix" \( -name '*.pc' -o -name '*.rules' \) -type f \
+		-exec sed -i "s|$srcdir/prefix|/usr/lib/$pkgname/prefix|g" {} +
+	# Nothing under the installed prefix may still point into the build tree.
+	local _leftover
+	_leftover=$(grep -rlI --binary-files=text -- "$srcdir" "$_root/prefix" 2>/dev/null || true)
+	[ -z "$_leftover" ] || {
+		echo "PKGBUILD: build paths left in the installed prefix (is patchelf installed?):" >&2
+		echo "$_leftover" >&2
+		return 1
+	}
+
+	# 3. docs
+	install -Dm644 README.md   "$pkgdir/usr/share/doc/$pkgname/README.md"
+	install -Dm644 CHANGELOG.md "$pkgdir/usr/share/doc/$pkgname/CHANGELOG.md"
+	install -Dm644 TESTING.md  "$pkgdir/usr/share/doc/$pkgname/TESTING.md"
+	install -Dm644 THIRD_PARTY_NOTICES.md "$pkgdir/usr/share/doc/$pkgname/THIRD_PARTY_NOTICES.md"
+	cp -a -- docs "$pkgdir/usr/share/doc/$pkgname/docs"
+
+	# 4. licences: t1-revive's own, then every vendored component's, plus the
+	#    corresponding-source statement the LGPL/GPL ask for.
+	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	local _c _lic
+	for _c in $T1R_VENDOR_ORDER; do
+		install -d "$pkgdir/usr/share/licenses/$pkgname/vendor/$_c"
+		for _lic in "vendor/src/$_c"/COPYING*; do
+			[ -f "$_lic" ] && install -Dm644 "$_lic" \
+				"$pkgdir/usr/share/licenses/$pkgname/vendor/$_c/$(basename -- "$_lic")"
+		done
+		install -Dm644 "vendor/src/$_c/AUTHORS" \
+			"$pkgdir/usr/share/licenses/$pkgname/vendor/$_c/AUTHORS" 2>/dev/null || true
+	done
+	install -d "$pkgdir/usr/share/licenses/$pkgname/patches"
+	install -Dm644 vendor/patches/*.patch "$pkgdir/usr/share/licenses/$pkgname/patches/"
+	sed -e "s|@VERSION@|$_relver|g" \
+	    -e "s|@SHA256_LIBIRECOVERY_PATCH@|$(sha256sum vendor/patches/libirecovery.patch | cut -d' ' -f1)|" \
+	    -e "s|@SHA256_USBMUXD_PATCH@|$(sha256sum vendor/patches/usbmuxd.patch | cut -d' ' -f1)|" \
+	    -e "s|@SHA256_IDEVICERESTORE_PATCH@|$(sha256sum vendor/patches/idevicerestore.patch | cut -d' ' -f1)|" \
+	    vendor/SOURCES.template > "$srcdir/SOURCES"
+	install -Dm644 "$srcdir/SOURCES" "$pkgdir/usr/share/licenses/$pkgname/SOURCES"
+	install -Dm644 vendor/refs.env "$pkgdir/usr/share/licenses/$pkgname/refs.env"
+}

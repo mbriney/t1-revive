@@ -1,0 +1,38 @@
+t1-revive @VERSION@ -- corresponding source for the bundled libimobiledevice stack
+=====================================================================================
+
+The binaries under prefix/ (idevicerestore, irecovery, plistutil, usbmuxd and the
+lib*.so they load) were built from the upstream git commits below plus, where listed,
+one patch from vendor/patches/ of the t1-revive source tree. That combination is the
+complete corresponding source in the sense of the LGPL-2.1, LGPL-3.0 and GPL-2.0/3.0
+licences under which those projects are distributed. Configure flags and build order
+are in build.sh; `bash build.sh --offline` rebuilds them bit-for-bit modulo toolchain.
+
+component               upstream                                                base commit                               patch (sha256)
+----------------------  ------------------------------------------------------  ----------------------------------------  ---------------------------------------------------------------------------------
+libplist                https://github.com/libimobiledevice/libplist            32428abacb909988e8e960a8845a6430b17b6a60  -
+libimobiledevice-glue   https://github.com/libimobiledevice/libimobiledevice-glue da770a7687f35fbb981db4d7b47b1b032cd5c2c7  -
+libtatsu                https://github.com/libimobiledevice/libtatsu            60a39f36d719344360ec2e87563ed43f61f0530f  -
+libirecovery            https://github.com/libimobiledevice/libirecovery        95dec3aa25b1e30654ca107eb971971f6a216520  libirecovery.patch   @SHA256_LIBIRECOVERY_PATCH@
+libusbmuxd              https://github.com/libimobiledevice/libusbmuxd          93eb168bf6b07472d17781328c21df0c60300524  -
+libimobiledevice        https://github.com/libimobiledevice/libimobiledevice    fa0f79190142bc309307967c058f89c1b36eb6b8  -
+usbmuxd                 https://github.com/libimobiledevice/usbmuxd             3ded00c9985a5108cfc7591a309f9a23d57a8cba  usbmuxd.patch        @SHA256_USBMUXD_PATCH@
+idevicerestore          https://github.com/libimobiledevice/idevicerestore      540c352c4c44896f7415abef87a166e8bbaea9b0  idevicerestore.patch @SHA256_IDEVICERESTORE_PATCH@
+
+Licences: libplist, libimobiledevice-glue, libtatsu, libusbmuxd: LGPL-2.1-or-later.
+libirecovery: LGPL-2.1-only (its headers say "version 2.1" with no "or later" clause).
+libimobiledevice: LGPL-2.1-or-later, except tools/idevicesetlocation.c (GPL-2.0-or-later).
+idevicerestore: LGPL-2.1-or-later per its source headers (its COPYING and README carry the
+LGPL-3.0 text). usbmuxd: GPL-2.0-only OR GPL-3.0-only. Full texts: THIRD_PARTY_NOTICES.md
+and vendor/src/<component>/COPYING* in the source tree (in the Arch package:
+/usr/share/licenses/t1-revive/).
+
+To obtain the sources without this tree:
+    git clone <upstream> && git -C <component> checkout <base commit>
+    git -C <component> apply vendor/patches/<patch>      # or: patch -p1 < vendor/patches/<patch>
+The t1-revive source tree (which contains vendor/patches/ and build.sh) is available
+from the project's repository at the tag matching @VERSION@.
+
+@SHA256_*@ placeholders are filled with `sha256sum vendor/patches/*.patch` when a release is
+assembled (tools/make-toolkit.sh for the toolkit, packaging/arch/PKGBUILD for the Arch
+package); @VERSION@ comes from the VERSION file.
