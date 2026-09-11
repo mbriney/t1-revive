@@ -124,7 +124,8 @@ t1_product() {
   case "$(t1_state)" in booted) echo 8600;; recovery) echo 1281;; *) echo none;; esac
 }
 
-# usb_report: "=== T1 USB state now ===" block of pass-a/pass-b (bus id and pid).
+# usb_report: "=== T1 USB state now ===" block of the provision and personalize
+# steps (bus id and pid).
 usb_report() {
   local d v
   for d in "${T1R_SYSFS:-/sys}"/bus/usb/devices/*/; do
@@ -137,7 +138,7 @@ usb_report() {
 # ---------------------------------------------------------------- usbmuxd --
 
 # start_usbmuxd: the private patched usbmuxd as a transient unit, exactly as
-# pass-a.sh / pass-b.sh start it. Needs prefix_env and priv_dir.
+# the provision and personalize steps start it. Needs prefix_env and priv_dir.
 start_usbmuxd() {
   local priv=$1
   dry_q systemctl stop "$T1R_MUX_UNIT.service"
@@ -229,7 +230,7 @@ run_step() {
   elapsed=$(( $(date +%s) - t0 ))
   if [ "$rc" = 0 ]; then
     # A dry run must never leave a marker behind: `t1-revive stage` reads them as proof
-    # that the T1 really ran phase 14.
+    # that the T1 really booted from the personalised image.
     if is_dry; then note "(dry) would record step marker $name.done"
     else install -d -m 700 "$(step_marker_dir)" && date +%s > "$(step_marker_dir)/$name.done"; fi
     diag step="$name" result=ok elapsed="$elapsed"
@@ -246,9 +247,9 @@ timing_summary() {
   [ ${#T1R_STEP_TIMES[@]} -gt 0 ] || return 0
   for e in "${T1R_STEP_TIMES[@]}"; do
     n=${e% *}; s=${e#* }; total=$((total + s))
-    note "$(printf '%-9s %4d s' "$n" "$s")"
+    note "$(printf '%-12s %4d s' "$n" "$s")"
   done
-  note "$(printf '%-9s %4d s (%d min %d s)' total "$total" $((total/60)) $((total%60)))"
+  note "$(printf '%-12s %4d s (%d min %d s)' total "$total" $((total/60)) $((total%60)))"
 }
 
 # lock_once: lock_acquire unless this process already holds the lock (the
@@ -311,8 +312,9 @@ restore_report() {
 }
 
 # check_idevicerestore MARKER: the patched binary is present, runs, and
-# carries the T1 implementation (pass A/B: "T1: EmbeddedOS restore options
-# applied"; phase 14: "T1: phase 14 mode").
+# carries the T1 implementation (provision/personalize: "T1: EmbeddedOS restore
+# options applied"; boot: "T1: phase 14 mode", the marker string the vendored
+# binary carries).
 check_idevicerestore() {
   local marker=$1 n
   [ -x "$T1R_IDR" ] || die 3 "idevicerestore not built at $T1R_IDR"

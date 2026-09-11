@@ -44,10 +44,10 @@ body:
         - Regenerated, handover to t1bridge failed
         - Stopped at preflight (exit 3)
         - Stopped at backup
-        - Failed at pass-a
-        - Failed at frst
-        - Failed at pass-b
-        - Failed at phase14
+        - Failed at provision
+        - Failed at reset-1 or reset-2
+        - Failed at personalize
+        - Failed at boot
         - Failed at stage
         - Refused for safety (exit 4)
         - Other
@@ -57,7 +57,7 @@ body:
     id: stopped
     attributes:
       label: The STOPPED line and exit code, if any
-      placeholder: "STOPPED: phase 14 did not reach a stable booted state (exit 5)"
+      placeholder: "STOPPED: boot did not reach a stable booted state (exit 5)"
   - type: textarea
     id: bundle
     attributes:
@@ -74,8 +74,8 @@ body:
       placeholder: |
         1. sudo t1-revive preflight -> all OK
         2. sudo t1-revive backup -> ok
-        3. sudo t1-revive regenerate -> STOPPED at phase14 after ~8 s
-        4. full power cycle, sudo t1-revive regenerate --from pass-b -> same
+        3. sudo t1-revive regenerate -> STOPPED at boot after ~8 s
+        4. full power cycle, sudo t1-revive regenerate --from personalize -> same
     validations:
       required: true
   - type: dropdown

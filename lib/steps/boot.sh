@@ -1,15 +1,15 @@
-# lib/steps/phase14.sh - step_phase14: replay the pass-B preflight image + AP
-# ticket and watch USB. Port of the proven phase14.sh.
+# lib/steps/boot.sh - step_boot: boot the T1 from the personalised image in RAM
+# and watch USB for a stable 05ac:8600. ported from phase14.sh.
 #
 # THIS TALKS TO THE T1. It runs no restore, requests no new ticket, and does
-# not touch the ESP. Sequence (inside the patched idevicerestore, phase-14
+# not touch the ESP. Sequence (inside the patched idevicerestore's replay
 # mode): auto-boot=false + saveenv, send the SAVED AP ticket, upload the SAVED
 # combined memboot, setenv boot-args rd=md0, blind memboot (bRequest=1). Then
 # USB is watched for 30 s: success is a 05ac:8600 that stays and does not fall
 # back to 05ac:1281.
 # shellcheck shell=bash
 
-step_phase14() {
+step_boot() {
   local priv fw image ticket rc sysfs
   local s8600=0 s1281=0 snone=0 last="" i s d n hid drv cfg
   prefix_env
@@ -19,8 +19,8 @@ step_phase14() {
   ticket="$priv/preflight.apticket"
   sysfs="${T1R_SYSFS:-/sys}"
 
-  say "phase 14: preflight checks"
-  t1_forbid booted 5 "a device is already at 05ac:8600 - the T1 is alive, do NOT run phase 14"
+  say "boot: preflight checks"
+  t1_forbid booted 5 "a device is already at 05ac:8600 - the T1 is alive, do NOT boot it again"
   t1_require recovery 5 "no 05ac:1281 device found (the T1 must be in recovery)"
   note "T1 in recovery"
   note "uptime: $(uptime -p 2>/dev/null)"
@@ -28,8 +28,8 @@ step_phase14() {
   check_idevicerestore "T1: phase 14 mode"
   note "patched binary OK"
 
-  expect_file "$image" 4 "missing preflight image (run pass B first)"
-  expect_file "$ticket" 4 "missing preflight ticket (run pass B first)"
+  expect_file "$image" 4 "missing preflight image (run the personalize step first)"
+  expect_file "$ticket" 4 "missing preflight ticket (run the personalize step first)"
   note "image:  $(file_size "$image") bytes"
   note "ticket: $(file_size "$ticket") bytes"
   if [ "$(file_size "$image")" = 30667180 ]; then
@@ -39,7 +39,7 @@ step_phase14() {
   fi
   bundle_ok "$fw"
 
-  # Phase 14 talks to recovery over libusb only; no usbmuxd must be running.
+  # The boot step talks to recovery over libusb only; no usbmuxd must be running.
   if systemctl is-active --quiet "$T1R_MUX_UNIT.service"; then note "stopping private usbmuxd"; stop_usbmuxd; fi
   no_system_usbmuxd 3
   note "no usbmuxd running"
@@ -54,7 +54,7 @@ step_phase14() {
   install -m 600 /dev/null "$priv/phase14.private.log"
   install -m 600 /dev/null "$priv/phase14-runner.private.log"
 
-  say "phase 14: replaying preflight image + ticket"
+  say "boot: replaying preflight image + ticket"
   dry env \
     -u IDEVICERESTORE_T1_EMBEDDEDOS \
     -u IDEVICERESTORE_T1_FDR_INPUT \
@@ -80,13 +80,13 @@ step_phase14() {
          | redact_restore
   rc=${PIPESTATUS[0]}
   chmod 600 "$priv"/*.log 2>/dev/null
-  note "phase-14 dispatch exit: $rc   (0 only proves the transaction was sent)"
+  note "boot dispatch exit: $rc   (0 only proves the transaction was sent)"
 
-  say "phase 14: watching USB for 30 s (120 samples)"
+  say "boot: watching USB for 30 s (120 samples)"
   if is_dry; then
     note "(dry) 120 samples of the T1 USB state at 0.25 s; success = 05ac:8600 in >= 60 samples, 05ac:1281 in none, 8600 last"
     note "(dry) then: force bConfigurationValue 1, power/control on, sleep 3, hid-sensor-hub unbind, sleep 2, 1D6B:0301 probe, sleep 1"
-    note "phase 14: (dry) verdict skipped"
+    note "boot: (dry) verdict skipped"
     return 0
   fi
   for i in $(seq 1 120); do
@@ -132,7 +132,7 @@ step_phase14() {
     sleep 1
   fi
 
-  say "phase 14: iBridge USB interfaces now"
+  say "boot: iBridge USB interfaces now"
   for d in "$sysfs"/bus/usb/devices/*/; do
     [ "$(cat "$d/idVendor" 2>/dev/null)" = "05ac" ] || continue
     [ "$(cat "$d/idProduct" 2>/dev/null)" = "8600" ] || continue
@@ -145,7 +145,7 @@ step_phase14() {
     done
   done
 
-  say "phase 14: HID devices"
+  say "boot: HID devices"
   for hid in "$sysfs"/bus/hid/devices/*05AC:8600* "$sysfs"/bus/hid/devices/*05AC:8302* "$sysfs"/bus/hid/devices/*05AC:8102* "$sysfs"/bus/hid/devices/*1D6B:0301*; do
     [ -e "$hid" ] || continue
     drv=unbound; [ -L "$hid/driver" ] && drv=$(basename "$(readlink -f "$hid/driver")")
@@ -153,19 +153,19 @@ step_phase14() {
   done
   grep -iE 'iBridge|Touch Bar' /proc/bus/input/devices 2>/dev/null | sed 's/^/   input: /' || note "no iBridge/Touch Bar input devices"
 
-  say "phase 14: kernel messages (usb/ibridge/touchbar)"
+  say "boot: kernel messages (usb/ibridge/touchbar)"
   d=$(t1_sysfs); n=${d##*/}
   dmesg --time-format reltime 2>/dev/null | tail -n 200 | grep -iE "usb ${n:-[0-9]+-[0-9]+}|ibridge|touchbar|appletb|hid" | tail -n 40 | sed 's/^/   /'
 
-  say "phase 14: verdict"
+  say "boot: verdict"
   if [ "$s8600" -ge 60 ] && [ "$s1281" -eq 0 ] && [ "$last" = 8600 ]; then
-    note "PHASE 14: 05ac:8600 stable for 30 s and no fallback to recovery."
+    note "BOOT: 05ac:8600 stable for 30 s and no fallback to recovery."
     note "Look at the Touch Bar now. NOTHING has been written to the ESP yet."
     sleep 0.5
     return 0
   fi
-  note "PHASE 14: NOT stable by the strict verdict (see samples above)."
-  diag step=phase14 verdict=not-stable s8600="$s8600" s1281="$s1281" last="${last:-none}"
+  note "BOOT: NOT stable by the strict verdict (see samples above)."
+  diag step=boot verdict=not-stable s8600="$s8600" s1281="$s1281" last="${last:-none}"
   if [ "${T1R_STRICT:-0}" = 1 ]; then
     note "--strict: do not stage anything on the ESP."
     sleep 0.5

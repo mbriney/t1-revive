@@ -171,7 +171,7 @@ The t1-revive patch adds `src/t1.c` and `src/t1.h` — Apple T1 / iBridge1,1 (x6
 EmbeddedOS restore support: firmware-bundle compatibility by ApChipID/ApBoardID, a restore
 with no OS filesystem, the EmbeddedOS `StartRestore` options, FDR memory-store
 capture/acknowledge/replay, preflight capture of the combined memboot image and its AP
-ticket, and the phase-14 replay — and hooks them into `src/idevicerestore.c`,
+ticket, and the memboot replay — and hooks them into `src/idevicerestore.c`,
 `src/restore.c` and `src/Makefile.am`. Every hook is inert unless an `IDEVICERESTORE_T1_*`
 environment variable is set.
 

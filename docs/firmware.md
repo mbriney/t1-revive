@@ -105,7 +105,7 @@ no longer matches:
   2. If the identical package is served from a new path, change `T1R_FIRMWARE_URL` in
      `lib/firmware.sh` and this page. Nothing else changes.
   3. If only a different EmbeddedOSFirmware package is available, do **not** re-pin without a
-     full hardware validation of the new bundle (pass A, pass B, phase 14, staging, cold boot on a
+     full hardware validation of the new bundle (provision, personalize, boot, staging, cold boot on a
      supported model). After validation, regenerate the manifest from the verified extraction
      (`firmware_manifest_print DIR > tools/firmware-manifest.sha256`, then add the header
      comments) and update the sha256, size and this page in the same commit.

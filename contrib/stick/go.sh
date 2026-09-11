@@ -104,7 +104,7 @@ case $pfrc in
   0) ;;
   7) stop "reboot needed" "the kernel changed. Reboot, then run this same command again: it picks up from here.";;
   *) stop "preflight" "fix the NO lines above, then run this again (full output: sudo t1-revive preflight).
-  If an earlier run already did pass A, resume instead:   sudo t1-revive regenerate --from pass-b";;
+  If an earlier run already did provision, resume instead: sudo t1-revive regenerate --from personalize";;
 esac
 SKIP_REGEN=0
 case "$(t1)" in

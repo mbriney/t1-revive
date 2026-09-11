@@ -3,9 +3,9 @@
 #
 #   t1-revive stage            write, verify with cmp
 #   t1-revive stage --dry-run  all checks, no writes
-#   t1-revive stage --force    even without the phase-14 done marker (warns)
+#   t1-revive stage --force    even without the boot done marker (warns)
 #
-# Run only after phase 14 reported 05ac:8600 stable. Files are staged under a
+# Run only after the boot step reported 05ac:8600 stable. Files are staged under a
 # temporary name on the same filesystem, synced, renamed atomically and read
 # back with cmp. Nothing else on the ESP is touched.
 # shellcheck shell=bash
@@ -39,13 +39,13 @@ cmd_stage() {
   [ "$dry" = 1 ] && note "*** DRY RUN: nothing will be written ***"
 
   say "stage: preflight checks"
-  if ! step_done phase14; then
+  if ! step_done boot; then
     if [ "$force" = 1 ]; then
-      warn "phase 14 has not completed on this machine; --force given, staging anyway"
+      warn "the boot step has not completed on this machine; --force given, staging anyway"
     elif is_dry; then
-      note "(dry) no phase-14 marker: a real run would refuse here"
+      note "(dry) no boot marker: a real run would refuse here"
     else
-      die 4 "phase 14 has not completed on this machine (no done marker). Run: t1-revive regenerate --from phase14, or add --force if you know the T1 is running this image"
+      die 4 "the boot step has not completed on this machine (no done marker). Run: t1-revive regenerate --from boot, or add --force if you know the T1 is running this image"
     fi
   fi
 
@@ -70,8 +70,8 @@ cmd_stage() {
   elif is_dry; then note "(dry) HID check skipped"
   else die 5 "iBridge is at 8600 but exposes no HID devices - that is the degraded restore personality, not a booted EmbeddedOS"; fi
 
-  expect_file "$image" 4 "missing preflight image (run pass B first)"
-  expect_file "$fdr" 4 "missing FDRData (run pass A first)"
+  expect_file "$image" 4 "missing preflight image (run the personalize step first)"
+  expect_file "$fdr" 4 "missing FDRData (run the provision step first)"
   if [ ! -s "$vers" ]; then is_dry || die 6 "missing version.plist in the firmware bundle"; fi
   need=$(( $(stat -c %s "$image" 2>/dev/null || echo 0) + $(stat -c %s "$fdr" 2>/dev/null || echo 0) + $(stat -c %s "$vers" 2>/dev/null || echo 0) + 1048576 ))
   if [ "$avail" -lt "$need" ]; then is_dry || die 4 "not enough space on the ESP ($avail < $need)"; fi

@@ -53,9 +53,9 @@ It then appears under /run/media/<your user>/TOOLKIT.
    hands the booted T1 to t1bridge with no restart. A full power cycle does the same.
 
    If go.sh stops during the regeneration, the reason is on screen and in
-   /var/log/t1-revive/latest.log (redacted; safe to paste). Pass A's data survives, so after a
+   /var/log/t1-revive/latest.log (redacted; safe to paste). The provisioned data survives, so after a
    full power cycle resume with:
-       sudo t1-revive regenerate --from pass-b
+       sudo t1-revive regenerate --from personalize
 
    The Touch Bar renderer needs the t1bridge group, which this login session predates, so the
    bar may only light for you at the next login. Touch ID works either way.

@@ -100,22 +100,22 @@ Preflight (`exit 3`):
 - Apple hosts unreachable (`exit 6`): DNS or captive portal. Fix the network; nothing on
   the device was touched.
 
-Pass A / pass B:
-- `exit 6` mid-pass: network. Power cycle, `--from pass-a` or `--from pass-b`.
+Provision / personalize:
+- `exit 6` mid-step: network. Power cycle, `--from provision` or `--from personalize`.
 - "finished but file missing": report; do not retry blind.
-- The T1 sits at `booted` with one plain interface after a pass: expected, it is not
-  a booted EmbeddedOS, the next FRST handles it.
+- The T1 sits at `booted` with one plain interface after one of them: expected, it is not
+  a booted EmbeddedOS, the next reset handles it.
 
-FRST:
+Reset (the `FRST` ACPI method):
 - T1 does not return to `recovery` within 60 s: power cycle, resume with `--from`.
 - The machine hard-freezes: a conflicting driver issued the other power method. After the
   power cycle, verify the legacy driver is gone before anything else. Report it.
 
-Phase 14:
+Boot:
 - Error before "transaction dispatched": host side, the T1 is untouched. Power cycle,
-  `--from phase14`.
+  `--from boot`.
 - `booted` appears then falls back to `recovery`: the image and ticket do not match. The
-  fix is `--from pass-b` after a power cycle, never a new ticket alone.
+  fix is `--from personalize` after a power cycle, never a new ticket alone.
 - `booted` stays but no Touch Bar and no HID: the image did not boot the OS payload.
   Report with the bundle; do not loop on retries.
 - Stays in `recovery`, nothing happens: try once more after a fresh power cycle, then report.
@@ -126,7 +126,7 @@ Stage / handover / persistence:
   ask which one the firmware boots from. Do not guess.
 - Cold boot comes back in `recovery` although the three files are staged: persistence
   failure, the most valuable report there is. Meanwhile, after a power cycle,
-  `sudo t1-revive regenerate --from phase14` boots the T1 for this session.
+  `sudo t1-revive regenerate --from boot` boots the T1 for this session.
 
 After handover, t1bridge side (documented by t1bridge, plus `docs/omarchy.md` for the
 Omarchy specifics, not here):
@@ -161,7 +161,7 @@ Omarchy specifics, not here):
 
    ```bash
    gh issue create -R niconistal/t1-revive \
-     --title "[MacBookPro14,2] recovery: phase14 falls back to recovery after 8 s" \
+     --title "[MacBookPro14,2] recovery: boot falls back to recovery after 8 s" \
      --label recovery-report \
      --body-file issue-body.md
    ```

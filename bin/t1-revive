@@ -30,7 +30,7 @@ subcommands
   preflight [--local] [--install]   check the machine; nothing touches the T1 (exit 3 = fix the NO lines)
   backup [--to DIR]                 optional: save EFI/APPLE from the ESP (tar, root-only); --to copies it off this disk
   status                            one screen: model, T1, ESP, state, t1bridge
-  regenerate [--from STEP]          pass-a -> frst -> pass-b -> frst -> phase14 -> stage -> handover
+  regenerate [--from STEP]          provision -> reset -> personalize -> reset -> boot -> stage -> handover
   stage [--dry-run]                 write the regenerated files to the ESP
   handover                          hand the booted T1 to t1bridge without a reboot
   report                            redacted diagnostic bundle to paste into an issue
@@ -44,7 +44,7 @@ global flags (before the subcommand)
   --state DIR    private state directory (default /var/lib/t1-revive)  (T1R_STATE)
   --log DIR      log directory (default /var/log/t1-revive)            (T1R_LOG)
   --firmware FILE  use this EmbeddedOSFirmware.pkg instead of downloading it (T1R_FIRMWARE)
-  --strict       stricter step gates than the proven run: pass A/B must also exit 0, phase 14 must
+  --strict       stricter step gates than the proven run: provision/personalize must also exit 0, boot must
                  hold 05ac:8600 for the whole 30 s watch. Default gates are the ones that ran on
                  the tested machine: the artefacts exist, the T1 is at 8600 after the watch (T1R_STRICT=1)
 

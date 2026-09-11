@@ -60,8 +60,8 @@ fingerprint sensor's serial. The Secure Enclave rejects another machine's file. 
 why it is safe.
 
 **What does resume mean?** Every step is a checkpoint. If the tool stops, power cycle and
-`sudo t1-revive regenerate --from STEP`. Pass A's output is kept, so a failure later does not
-repeat the first conversation with Apple.
+`sudo t1-revive regenerate --from STEP`. The provision step's output is kept, so a failure
+later does not repeat the first conversation with Apple.
 
 ## Is it safe? Is it allowed?
 

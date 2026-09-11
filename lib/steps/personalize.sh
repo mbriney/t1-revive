@@ -1,35 +1,37 @@
-# lib/steps/pass-b.sh - step_pass_b: replay the pass-A FDR store, capture the
-# personalised preflight memboot image and its AP ticket. Port of pass-b.sh.
+# lib/steps/personalize.sh - step_personalize: replay the provisioned FDR store
+# and capture the boot image personalised for this chip plus its AP ticket.
+# ported from pass-b.sh.
 #
 # THIS TALKS TO THE T1 AND IS NOT REVERSIBLE. Same EmbeddedOS restore as
-# pass A, with the FDR store replayed as input and the preflight image + ticket
-# saved; phase 14 replays exactly that pair. No ESP or Linux-install writes;
-# no FRST. Identity-bearing data stays 0600 under $T1R_STATE/private.
+# provision, with the FDR store replayed as input and the preflight image +
+# ticket saved; the boot step replays exactly that pair. No ESP or
+# Linux-install writes; no FRST. Identity-bearing data stays 0600 under
+# $T1R_STATE/private.
 # shellcheck shell=bash
 
-step_pass_b() {
+step_personalize() {
   local priv fw rc boot_args f ok
   prefix_env
   fw=$(firmware_dir) || exit 1
   boot_args='rd=md0 -restore IOUSBDeviceController-configuration=standardMuxOnly'
   priv="${T1R_STATE:?}/private"
 
-  say "pass B: preflight checks"
+  say "personalize: preflight checks"
   # 1. The T1 must be in recovery. If it is already 8600 we must not touch it.
-  t1_forbid booted 5 "a device is already at 05ac:8600 - the T1 is alive, do NOT run pass B"
+  t1_forbid booted 5 "a device is already at 05ac:8600 - the T1 is alive, do NOT run personalize"
   t1_require recovery 5 "no 05ac:1281 device found"
   note "T1 in recovery"
   # 2. Binaries must be the patched ones.
   [ -x "$T1R_MUX" ] || die 3 "patched usbmuxd not built at $T1R_MUX"
   check_idevicerestore "T1: EmbeddedOS restore options applied"
   note "patched binaries OK"
-  # 2b. Pass A's FDR store must exist - it is the whole point of pass B.
-  expect_file "$priv/FDRData" 4 "no FDRData from pass A (run: t1-revive regenerate --from pass-a)"
+  # 2b. The provisioned FDR store must exist - it is the whole point of this step.
+  expect_file "$priv/FDRData" 4 "no FDRData from the provision step (run: t1-revive regenerate --from provision)"
   if ! is_dry; then
     LD_LIBRARY_PATH="$T1R_LIBS" "$T1R_PLISTUTIL" -i "$priv/FDRData" -o /dev/null 2>/dev/null \
-      || die 4 "the pass-A FDRData does not parse as a plist"
+      || die 4 "the provisioned FDRData does not parse as a plist"
   fi
-  note "pass A FDRData present ($(file_size "$priv/FDRData") bytes)"
+  note "provisioned FDRData present ($(file_size "$priv/FDRData") bytes)"
   # 3. Firmware bundle.
   bundle_ok "$fw"
   note "firmware bundle OK"
@@ -39,10 +41,10 @@ step_pass_b() {
 
   priv=$(priv_dir) || exit 1
 
-  say "pass B: starting private usbmuxd"
+  say "personalize: starting private usbmuxd"
   start_usbmuxd "$priv"
 
-  say "pass B: EmbeddedOS restore with FDR INPUT replayed + preflight capture"
+  say "personalize: EmbeddedOS restore with FDR INPUT replayed + preflight capture"
   note "(this takes a few minutes; do not unplug or sleep the machine)"
   install -m 600 /dev/null "$priv/phase11.private.log"
   install -m 600 /dev/null "$priv/phase11-runner.private.log"
@@ -71,7 +73,7 @@ step_pass_b() {
   rc=${PIPESTATUS[0]}
   chmod 600 "$priv"/*.log 2>/dev/null
 
-  say "pass B: result"
+  say "personalize: result"
   restore_report "$priv/phase11-runner.private.log" "$rc"
   ok=1
   for f in combined.preflight.memboot preflight.apticket FDRData.replayed; do
@@ -84,33 +86,33 @@ step_pass_b() {
   done
   if [ -s "$priv/FDRData.replayed" ]; then
     if cmp -s "$priv/FDRData" "$priv/FDRData.replayed"; then
-      note "FDR replay matches pass A store byte-for-byte: yes"
+      note "FDR replay matches the provisioned store byte-for-byte: yes"
     else
-      note "FDR replay matches pass A store byte-for-byte: NO (sizes: $(file_size "$priv/FDRData") vs $(file_size "$priv/FDRData.replayed"))"
+      note "FDR replay matches the provisioned store byte-for-byte: NO (sizes: $(file_size "$priv/FDRData") vs $(file_size "$priv/FDRData.replayed"))"
     fi
   fi
   if [ "$ok" = 1 ] && [ "$rc" = 0 ]; then
-    note "PASS B: all artefacts captured."
+    note "PERSONALIZE: all artefacts captured."
   else
-    note "PASS B: incomplete - do NOT run phase 14 with these artefacts."
+    note "PERSONALIZE: incomplete - do NOT boot the T1 with these artefacts."
   fi
 
-  say "pass B: T1 USB state now"
+  say "personalize: T1 USB state now"
   usb_report
 
   note "stopping private usbmuxd"
   stop_usbmuxd
-  note "pass B finished. NOTHING has been written to the ESP."
+  note "personalize finished. NOTHING has been written to the ESP."
   sleep 0.5
   # Gate as the proven run did: image and ticket exist. Exit status and the replayed-store check
   # are fatal only with --strict.
   if is_dry; then note "(dry) artefact gate skipped (no restore ran)"; return 0; fi
-  diag step=pass-b restore_rc="$rc" artefacts_ok="$ok"
+  diag step=personalize restore_rc="$rc" artefacts_ok="$ok"
   [ -s "$priv/combined.preflight.memboot" ] && [ -s "$priv/preflight.apticket" ] \
-    || { warn "pass B finished but image/ticket missing"; return 1; }
+    || { warn "personalize finished but image/ticket missing"; return 1; }
   if [ "$rc" != 0 ] || [ "$ok" != 1 ]; then
-    if [ "${T1R_STRICT:-0}" = 1 ]; then warn "pass B incomplete (rc=$rc, artefacts=$ok); --strict: stopping"; return 1; fi
-    warn "pass B: idevicerestore exited $rc, artefacts complete=$ok; image and ticket are present so continuing as the proven run did (use --strict to stop here)"
+    if [ "${T1R_STRICT:-0}" = 1 ]; then warn "personalize incomplete (rc=$rc, artefacts=$ok); --strict: stopping"; return 1; fi
+    warn "personalize: idevicerestore exited $rc, artefacts complete=$ok; image and ticket are present so continuing as the proven run did (use --strict to stop here)"
   fi
   return 0
 }

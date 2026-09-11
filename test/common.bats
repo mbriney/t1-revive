@@ -129,12 +129,12 @@ setup() { t1r_env; }
 # --- diag / die ------------------------------------------------------------------------
 @test "diag: writes a v=1 line with component and the given pairs" {
   t1r_load; t1r_need diag
-  diag step=pass-a result=ok elapsed=97
+  diag step=provision result=ok elapsed=97
   local line
   line=$(cat "$T1R_LOGFILE" "$T1R_LOG"/*.log 2>/dev/null | grep -m1 '^t1-revive-diagnostic ') || {
     echo "no diagnostic line in $T1R_LOGFILE or $T1R_LOG" >&2; return 1; }
   assert_contains "$line" "t1-revive-diagnostic v=1 component=test"
-  assert_contains "$line" "step=pass-a"
+  assert_contains "$line" "step=provision"
   assert_contains "$line" "result=ok"
   assert_contains "$line" "elapsed=97"
 }

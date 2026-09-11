@@ -43,11 +43,11 @@ state at each step as the tool reports it. Note the wall-clock time of each step
 
 | Step | Expected | Observed (state, time, exit) |
 | --- | --- | --- |
-| pass A | `Restore Finished`; FDR store written; T1 at `8600` degraded | |
-| FRST | return `0x0`; T1 back at `1281` within seconds | |
-| pass B | `Restore Finished`; image, ticket and replayed store written; replay byte-identical | |
-| FRST | as above | |
-| phase 14 | `8600` within about 10 s, stable for 30 s, no fallback to `1281` | |
+| provision | `Restore Finished`; FDR store written; T1 at `8600` degraded | |
+| reset (`reset-1`) | return `0x0`; T1 back at `1281` within seconds | |
+| personalize | `Restore Finished`; image, ticket and replayed store written; replay byte-identical | |
+| reset (`reset-2`) | as above | |
+| boot | `8600` within about 10 s, stable for 30 s, no fallback to `1281` | |
 | stage | three files verified on the ESP | |
 | handover | t1bridge takes the device (if installed), or the instruction to power cycle | |
 
@@ -111,9 +111,9 @@ in it, that is a bug; report it privately per [../SECURITY.md](../SECURITY.md).
 | Starting state | `1281`, or `8600` without the folder |
 | Backup off-disk | `FDRData` inside / nothing to copy / skipped |
 | Preflight | clean / reboot needed once / NO lines (which) |
-| pass A / FRST / pass B / FRST / phase 14 / stage / handover | ok or stopped at, with exit code |
+| provision / reset / personalize / reset / boot / stage / handover | ok or stopped at, with exit code |
 | Resumes needed | step and count |
-| Wall clock, pass A start to ESP verified | |
+| Wall clock, provision start to ESP verified | |
 | Cold boot: Touch Bar lit | |
 | t1bridge import / enroll (first try or retry) / verify | |
 | sudo by touch / by password | |

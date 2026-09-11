@@ -25,9 +25,11 @@ licences (LGPL-2.1 for idevicerestore and libirecovery, GPL for usbmuxd).
 5. **Device-touching steps confirm first** unless `--no-confirm`/`--demo`. A step checks the
    T1's USB state before touching it and stops on the first failure with the fallback spelled
    out (full power cycle, then resume with `--from STEP`).
-6. **Preserve the proven sequence.** The restore steps (pass A, pass B, phase 14, ESP staging,
-   FRST, handover) are refactored for layout and naming only. The commands sent to the device,
-   their order, flags, environment and timings stay exactly as in the proven scripts.
+6. **Preserve the proven sequence.** The restore steps (`provision`, `reset`, `personalize`,
+   `reset`, `boot`, `stage`, `handover`; the cross-reference table in `docs/how-it-works.md`
+   maps them to the original recipe's and idevicerestore's names) are refactored for layout
+   and naming only. The commands sent to the device, their order, flags, environment and
+   timings stay exactly as in the proven scripts.
 7. **Shell is bash**, `set -uo pipefail`, shellcheck-clean, functions sourceable without side
    effects. Python is allowed only for parsers and extractors under `tools/` (ACPI, plist,
    xar/pbzx). No other languages.
@@ -46,13 +48,14 @@ lib/report.sh            cmd_report: redacted, structured diagnostic bundle
 lib/cmd-preflight.sh     cmd_preflight
 lib/cmd-backup.sh        cmd_backup
 lib/cmd-status.sh        cmd_status
-lib/cmd-regenerate.sh    cmd_regenerate (pass-a -> frst -> pass-b -> frst -> phase14 -> stage -> handover)
+lib/cmd-regenerate.sh    cmd_regenerate (provision -> reset-1 -> personalize -> reset-2 -> boot -> stage -> handover)
 lib/cmd-stage.sh         cmd_stage (ESP staging, --dry-run)
 lib/cmd-handover.sh      cmd_handover (USB re-enumeration to t1bridge)
-lib/steps/pass-a.sh      step_pass_a        (from pass-a.sh)
-lib/steps/pass-b.sh      step_pass_b        (from pass-b.sh)
-lib/steps/phase14.sh     step_phase14       (from phase14.sh)
-lib/steps/frst.sh        step_frst          (from frst-test.sh / one-shot.sh)
+lib/steps/provision.sh   step_provision     the T1 gets its device-specific FDR identity data from Apple
+lib/steps/personalize.sh step_personalize   replay it; capture the personalised boot image + AP ticket
+lib/steps/boot.sh        step_boot          boot the T1 from that image in RAM, watch USB for 05ac:8600
+lib/steps/reset.sh       step_reset         the T1-only ACPI reset (the FRST method); ids reset-1, reset-2
+                         (the older recipe names for these four are in docs/how-it-works.md)
 tools/                   scan-identifiers.sh, ACPI/plist/pbzx helpers (python), make-toolkit.sh, make-install-stick.sh
 vendor/                  build recipes and pinned refs for the patched libimobiledevice stack; build.sh at root
 packaging/arch/PKGBUILD  AUR recipe (builds vendor/ from pinned tags; nothing from Apple at build time)
@@ -145,8 +148,8 @@ frst_method              prints the full ACPI path of the T1 reset method (e.g.
 One line per event, no free text, no identifiers:
 
 ```
-t1-revive-diagnostic v=1 component=regenerate step=pass-a result=ok elapsed=97
-t1-revive-diagnostic v=1 component=regenerate step=frst result=error code=5 t1=none
+t1-revive-diagnostic v=1 component=regenerate step=provision result=ok elapsed=97
+t1-revive-diagnostic v=1 component=regenerate step=reset-1 result=error code=5 t1=none
 ```
 
 `t1-revive report` prints the redacted bundle testers paste into an issue: tool version,

@@ -1,8 +1,8 @@
 # lib/cmd-regenerate.sh - cmd_regenerate: the whole T1 regeneration with no
 # reboot between steps. Port of one-shot.sh.
 #
-#   t1-revive regenerate                 pass-a -> frst-a -> pass-b -> frst-b -> phase14 -> stage -> handover
-#   t1-revive regenerate --from STEP     resume at pass-a | frst-a | pass-b | frst-b | phase14 | stage | handover
+#   t1-revive regenerate                 provision -> reset-1 -> personalize -> reset-2 -> boot -> stage -> handover
+#   t1-revive regenerate --from STEP     resume at provision | reset-1 | personalize | reset-2 | boot | stage | handover
 #   t1-revive regenerate --force         skip the confirmation about replacing existing EFI/APPLE data; passed on to stage
 #
 # Every step checks the T1's USB state before touching it and the chain stops
@@ -15,18 +15,18 @@
 _t1r_lib=${T1R_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)}/lib
 # shellcheck source=steps/common-steps.sh
 declare -F run_step >/dev/null 2>&1 || . "$_t1r_lib/steps/common-steps.sh"
-for _t1r_f in steps/pass-a steps/pass-b steps/phase14 steps/frst cmd-stage cmd-handover; do
+for _t1r_f in steps/provision steps/personalize steps/boot steps/reset cmd-stage cmd-handover; do
   # shellcheck disable=SC1090
   . "$_t1r_lib/$_t1r_f.sh"
 done
 unset _t1r_f
 
-_regen_steps="pass-a frst-a pass-b frst-b phase14 stage handover"
+_regen_steps="provision reset-1 personalize reset-2 boot stage handover"
 
 _regen_index() {
   case "$1" in
-    pass-a) echo 1;; frst-a) echo 2;; pass-b) echo 3;; frst-b) echo 4;;
-    phase14) echo 5;; stage) echo 6;; handover) echo 7;; *) echo 0;;
+    provision) echo 1;; reset-1) echo 2;; personalize) echo 3;; reset-2) echo 4;;
+    boot) echo 5;; stage) echo 6;; handover) echo 7;; *) echo 0;;
   esac
 }
 
@@ -37,11 +37,11 @@ _regen_fail() { die 5 "$2. $(fallback_text "$1")"; }
 _regen_ensure_recovery() {
   [ "$(t1_state)" = recovery ] && return 0
   note "T1 is not in recovery; resetting it first"
-  ( step_frst ) || _regen_fail "$1" "T1 reset before $1 failed"
+  ( step_reset ) || _regen_fail "$1" "T1 reset before $1 failed"
 }
 
 cmd_regenerate() {
-  local from=pass-a force=0 start priv fw esp_mnt model status n
+  local from=provision force=0 start priv fw esp_mnt model status n
   while [ $# -gt 0 ]; do
     case "$1" in
       --from) [ $# -ge 2 ] || die 2 "--from needs a step"; from=$2; shift;;
@@ -84,7 +84,7 @@ cmd_regenerate() {
   note "patched tools OK"
   no_system_usbmuxd 3
   if command -v t1bridge >/dev/null 2>&1 || modinfo -n t1_cfgsel >/dev/null 2>&1; then
-    note "t1bridge is installed; its modules get reloaded by the kernel when 8600 appears; phase 14 handles that"
+    note "t1bridge is installed; its modules get reloaded by the kernel when 8600 appears; the boot step handles that"
   fi
 
   # Existing EFI/APPLE/EMBEDDEDOS is replaced by the regenerated set. An off-disk backup is
@@ -124,36 +124,36 @@ cmd_regenerate() {
 
   # -------------------------------------------------------------- chain ----
   if [ "$start" -le 1 ]; then
-    step_banner "Step 1 of 4: the T1 asks Apple for its own data" "step 1/7 · pass A (FDR creation)"
-    _regen_ensure_recovery pass-a
-    run_step pass-a step_pass_a "talking to Apple's servers" || _regen_fail pass-a "pass A failed (see the log)"
-    expect_file "$priv/FDRData" 5 "pass A finished but no FDRData. $(fallback_text pass-a)"
+    step_banner "Step 1 of 4: the T1 asks Apple for its own data" "step 1/7 · provision (FDR provisioning)"
+    _regen_ensure_recovery provision
+    run_step provision step_provision "talking to Apple's servers" || _regen_fail provision "provision failed (see the log)"
+    expect_file "$priv/FDRData" 5 "provision finished but no FDRData. $(fallback_text provision)"
     note "FDRData: $(file_size "$priv/FDRData") bytes"
   fi
   if [ "$start" -le 2 ]; then
-    run_step frst-a step_frst "resetting the T1" || _regen_fail frst-a "T1 reset after pass A failed"
+    run_step reset-1 step_reset "resetting the T1" || _regen_fail reset-1 "T1 reset after provision failed"
   fi
   if [ "$start" -le 3 ]; then
-    step_banner "Step 2 of 4: personalising the T1's boot image" "step 3/7 · pass B (memboot + ticket capture)"
-    _regen_ensure_recovery pass-b
-    run_step pass-b step_pass_b "talking to Apple's servers" || _regen_fail pass-b "pass B failed (see the log)"
-    expect_file "$priv/combined.preflight.memboot" 5 "pass B finished but the image is missing. $(fallback_text pass-b)"
-    expect_file "$priv/preflight.apticket" 5 "pass B finished but the ticket is missing. $(fallback_text pass-b)"
+    step_banner "Step 2 of 4: personalising the T1's boot image" "step 3/7 · personalize (memboot + ticket capture)"
+    _regen_ensure_recovery personalize
+    run_step personalize step_personalize "talking to Apple's servers" || _regen_fail personalize "personalize failed (see the log)"
+    expect_file "$priv/combined.preflight.memboot" 5 "personalize finished but the image is missing. $(fallback_text personalize)"
+    expect_file "$priv/preflight.apticket" 5 "personalize finished but the ticket is missing. $(fallback_text personalize)"
     note "image: $(file_size "$priv/combined.preflight.memboot") bytes, ticket: $(file_size "$priv/preflight.apticket") bytes"
   fi
   if [ "$start" -le 4 ]; then
-    run_step frst-b step_frst "resetting the T1" || _regen_fail frst-b "T1 reset after pass B failed"
+    run_step reset-2 step_reset "resetting the T1" || _regen_fail reset-2 "T1 reset after personalize failed"
   fi
   if [ "$start" -le 5 ]; then
-    step_banner "Step 3 of 4: booting the T1" "step 5/7 · phase 14 (boot the T1 with the captured image)"
-    _regen_ensure_recovery phase14
+    step_banner "Step 3 of 4: booting the T1" "step 5/7 · boot (boot the T1 from the captured image)"
+    _regen_ensure_recovery boot
     for n in t1_cfgsel appletbdrm apple_t1_ncm; do dry_q modprobe -r "$n" || true; done
-    run_step phase14 step_phase14 "watch the Touch Bar" || _regen_fail phase14 "phase 14 did not reach a stable 05ac:8600 (see the log)"
-    dry_wait booted 5 || _regen_fail phase14 "T1 not at 8600 after phase 14"
+    run_step boot step_boot "watch the Touch Bar" || _regen_fail boot "boot did not reach a stable 05ac:8600 (see the log)"
+    dry_wait booted 5 || _regen_fail boot "T1 not at 8600 after the boot step"
   fi
   if [ "$start" -le 6 ]; then
     step_banner "Step 4 of 4: making it permanent" "step 6/7 · stage the ESP"
-    t1_require booted 5 "T1 must be alive at 8600 to stage. $(fallback_text phase14)"
+    t1_require booted 5 "T1 must be alive at 8600 to stage. $(fallback_text boot)"
     local -a stage_args=(); [ "$force" = 1 ] && stage_args=(--force)
     ( cmd_stage --dry-run "${stage_args[@]}" ) || die 4 "stage dry run refused (see above)"
     run_step stage cmd_stage "writing the boot files" "${stage_args[@]}" || _regen_fail stage "staging the ESP failed"

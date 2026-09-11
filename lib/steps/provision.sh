@@ -1,5 +1,6 @@
-# lib/steps/pass-a.sh - step_pass_a: the EmbeddedOS restore that makes the T1
-# produce its own FDR identity data. Port of the proven pass-a.sh.
+# lib/steps/provision.sh - step_provision: the EmbeddedOS restore that makes the
+# T1 obtain its own device-specific FDR identity data from Apple's FDR service.
+# ported from pass-a.sh.
 #
 # THIS TALKS TO THE T1 AND IS NOT REVERSIBLE. It does not touch the ESP, the
 # Linux filesystem or macOS, and it does not call FRST (that is the next step).
@@ -7,15 +8,15 @@
 # never printed.
 # shellcheck shell=bash
 
-step_pass_a() {
+step_provision() {
   local priv fw rc boot_args
   prefix_env
   fw=$(firmware_dir) || exit 1
   boot_args='rd=md0 -restore IOUSBDeviceController-configuration=standardMuxOnly'
 
-  say "pass A: preflight checks"
+  say "provision: preflight checks"
   # 1. The T1 must be in recovery. If it is already 8600 we must not touch it.
-  t1_forbid booted 5 "a device is already at 05ac:8600 - the T1 is alive, do NOT run pass A"
+  t1_forbid booted 5 "a device is already at 05ac:8600 - the T1 is alive, do NOT run provision"
   t1_require recovery 5 "no 05ac:1281 device found"
   note "T1 in recovery"
   # 2. Binaries must be the patched ones.
@@ -31,10 +32,10 @@ step_pass_a() {
 
   priv=$(priv_dir) || exit 1
 
-  say "pass A: starting private usbmuxd"
+  say "provision: starting private usbmuxd"
   start_usbmuxd "$priv"
 
-  say "pass A: EmbeddedOS restore with FDR output armed"
+  say "provision: EmbeddedOS restore with FDR output armed"
   note "(this takes a few minutes; do not unplug or sleep the machine)"
   install -m 600 /dev/null "$priv/fdr-create.private.log"
   install -m 600 /dev/null "$priv/fdr-create-runner.private.log"
@@ -63,7 +64,7 @@ step_pass_a() {
   rc=${PIPESTATUS[0]}
   chmod 600 "$priv"/*.log 2>/dev/null
 
-  say "pass A: result"
+  say "provision: result"
   restore_report "$priv/fdr-create-runner.private.log" "$rc"
   if [ -s "$priv/FDRData" ]; then
     note "FDRData: $(stat -c '%s bytes mode %a' "$priv/FDRData")"
@@ -77,18 +78,18 @@ step_pass_a() {
     note "FDRData: MISSING OR EMPTY"
   fi
 
-  say "pass A: T1 USB state now"
+  say "provision: T1 USB state now"
   usb_report
 
   note "stopping private usbmuxd"
   stop_usbmuxd
-  note "pass A finished. NOTHING has been written to the ESP."
+  note "provision finished. NOTHING has been written to the ESP."
   sleep 0.5
   # Gate as the proven run did: the store exists. idevicerestore's exit status is recorded in the
   # log and diag; it is fatal only with --strict (the original always exited 0 here).
   if is_dry; then note "(dry) artefact gate skipped (no restore ran)"; return 0; fi
-  diag step=pass-a restore_rc="$rc"
-  [ -s "$priv/FDRData" ] || { warn "pass A finished but no FDRData"; return 1; }
+  diag step=provision restore_rc="$rc"
+  [ -s "$priv/FDRData" ] || { warn "provision finished but no FDRData"; return 1; }
   if [ "$rc" != 0 ]; then
     if [ "${T1R_STRICT:-0}" = 1 ]; then warn "idevicerestore exited $rc (--strict: treating as failure)"; return 1; fi
     warn "idevicerestore exited $rc but FDRData was written; continuing as the proven run did (use --strict to stop here)"

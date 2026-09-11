@@ -95,6 +95,6 @@ Touch ID works either way.
 
 ## If it stops
 
-The reason is on screen and in `/var/log/t1-revive/latest.log`. Pass A's data survives, so
-resume with `sudo t1-revive regenerate --from pass-b` (or the step named), after a full power
-cycle. Then t1bridge by hand. See [troubleshooting.md](troubleshooting.md).
+The reason is on screen and in `/var/log/t1-revive/latest.log`. The provisioned data
+survives, so resume with `sudo t1-revive regenerate --from personalize` (or the step named),
+after a full power cycle. Then t1bridge by hand. See [troubleshooting.md](troubleshooting.md).

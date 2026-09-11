@@ -8,8 +8,8 @@ machine.
 ## The diagnostic line
 
 ```text
-t1-revive-diagnostic v=1 component=regenerate step=pass-a result=ok elapsed=97
-t1-revive-diagnostic v=1 component=regenerate step=frst result=error code=5 t1=none
+t1-revive-diagnostic v=1 component=regenerate step=provision result=ok elapsed=97
+t1-revive-diagnostic v=1 component=regenerate step=reset-1 result=error code=5 t1=none
 t1-revive-diagnostic v=1 component=preflight check=kernel-headers result=error
 t1-revive-diagnostic v=1 component=stage step=verify result=ok files=3
 ```
@@ -31,7 +31,7 @@ Rules of the format:
 | Key | Values | Meaning |
 | --- | --- | --- |
 | `component` | `preflight` `backup` `status` `regenerate` `stage` `handover` `firmware` `distro` `report` | the command or module that emitted the line |
-| `step` | `pass-a` `frst` `pass-b` `phase14` `stage` `handover` `fetch` `verify` `extract` `backup` | the step inside a command |
+| `step` | `provision` `reset-1` `personalize` `reset-2` `boot` `stage` `handover` `fetch` `verify` `extract` `backup` | the step inside a command |
 | `phase` | `start` `wait` `done` | position inside a step, when a step has a long wait |
 | `check` | a preflight check name, e.g. `model` `kernel-headers` `acpi-call` `usbmuxd` `network` `esp` `t1-state` | which preflight check produced the result |
 | `result` | `ok` `error` `skipped` `refused` `timeout` | outcome of the step or check |

@@ -83,7 +83,7 @@ and checked against a pinned checksum.
 ```sh
 sudo t1-revive preflight                    # read-only checks; installs the few packages
 sudo t1-revive backup --to PATH             # recommended; copies EFI/APPLE off this disk if it exists
-sudo t1-revive regenerate                   # pass A, reset, pass B, reset, phase 14, stage, handover
+sudo t1-revive regenerate                   # provision, reset, personalize, reset, boot, stage, handover
 ```
 
 The backup step is recommended, not required. If any of `EFI/APPLE` still exists, copy it
@@ -114,9 +114,9 @@ verified ESP, with zero reboots. [docs/how-it-works.md](docs/how-it-works.md) ha
 
 The tool stops at the first failure, names the step, and prints the fallback. The fallback is
 always the same: full shutdown, wait 20 seconds, power on, then resume with
-`sudo t1-revive regenerate --from STEP` where STEP is one of `pass-a`, `pass-b`, `phase14`,
-`stage`, `handover`. Pass A's data survives in the state directory, so a failure in pass B or
-later does not repeat the first pass. The T1 cannot end up worse than recovery mode, which is
+`sudo t1-revive regenerate --from STEP` where STEP is one of `provision`, `reset-1`,
+`personalize`, `reset-2`, `boot`, `stage`, `handover`. The provisioned data survives in the
+state directory, so a failure in `personalize` or later does not repeat the provision step. The T1 cannot end up worse than recovery mode, which is
 where it started. [docs/troubleshooting.md](docs/troubleshooting.md) is organised by symptom
 and exit code.
 
@@ -126,11 +126,11 @@ Network:
 
 | Endpoint | When | What for |
 | --- | --- | --- |
-| `swcdn.apple.com` | before pass A | download of Apple's public `EmbeddedOSFirmware.pkg` |
-| `gs.apple.com` | pass A and pass B | TSS, the signing service: the chip's identity and nonces go up, signed tickets come back |
-| Apple's FDR service, reached through the restore protocol | pass A and pass B | the chip's factory data record, signed for this chip |
+| `swcdn.apple.com` | before `provision` | download of Apple's public `EmbeddedOSFirmware.pkg` |
+| `gs.apple.com` | `provision` and `personalize` | TSS, the signing service: the chip's identity and nonces go up, signed tickets come back |
+| Apple's FDR service, reached through the restore protocol | `provision` and `personalize` | the chip's factory data record, signed for this chip |
 
-Phase 14, staging and handover use no network. What Apple's servers see is what any T1 or
+Booting the T1, staging and handover use no network. What Apple's servers see is what any T1 or
 iPhone restore sends: the chip's identity and nonces. Nothing about your files or your
 fingerprints. Fingerprints never leave the Secure Enclave.
 
@@ -200,10 +200,10 @@ Related contributions to the projects around this tool:
 
 | Project | Change | Status |
 | --- | --- | --- |
-| omacom/omarchy-iso | preserve `EFI/APPLE` across the installer's disk wipe (the root fix for basecamp/omarchy#8271) | PR_OMARCHY_ISO |
-| basecamp/omarchy | lock screen keeps the fingerprint reader idle while the display is blanked | PR_OMARCHY_LOCK |
+| omacom/omarchy-iso | preserve `EFI/APPLE` across the installer's disk wipe (the root fix for basecamp/omarchy#8271) | [omarchy-iso#174](https://github.com/omacom/omarchy-iso/pull/174), open |
+| basecamp/omarchy | lock screen keeps the fingerprint reader idle while the display is blanked | PR in preparation |
 | standardagents/t1bridge | bplist offset widths 1 to 8 bytes (the width the T1 writes) | [#16](https://github.com/standardagents/t1bridge/pull/16), merged, shipped in 0.1.6 |
-| standardagents/t1bridge | issues from this work | ISSUES_T1BRIDGE |
+| standardagents/t1bridge | issues from this work | [#21](https://github.com/standardagents/t1bridge/issues/21) failed keybag unit blocks enrollment; [#22](https://github.com/standardagents/t1bridge/issues/22) document the no-reboot handover; data points on [#14](https://github.com/standardagents/t1bridge/issues/14) |
 
 ## Credits
 

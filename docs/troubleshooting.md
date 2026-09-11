@@ -83,35 +83,35 @@ is gone. `preflight` says so. `regenerate` resets it into recovery with FRST fir
 proceeds. If the folder exists and the T1 is at `8600`, there is nothing to regenerate; the
 tool refuses (exit 4).
 
-## Pass A or pass B failed (exit 5 or 6)
+## Provision or personalize failed (exit 5 or 6)
 
-The tool names the pass and stops. Read the tail of `latest.log`.
+The tool names the step and stops. Read the tail of `latest.log`.
 
 - A dispatch or device error before the restore started: host side. The T1 is untouched.
   Power cycle, fix what the message says, rerun.
 - The restore started and aborted: the T1 falls back to recovery. Power cycle, then
-  `--from pass-a` or `--from pass-b`. Pass A's data survives a pass B failure, so
-  `--from pass-b` does not repeat it.
-- A network error mid-restore, exit 6: same fallback. The passes need Apple for their whole
+  `--from provision` or `--from personalize`. The provisioned data survives a personalize
+  failure, so `--from personalize` does not repeat it.
+- A network error mid-restore, exit 6: same fallback. Both steps need Apple for their whole
   duration; do not let the machine sleep.
 
-## Phase 14 fell back to 1281 (exit 5)
+## Boot fell back to 1281 (exit 5)
 
 `8600` appeared and disappeared within seconds. iBoot rejected the image or the ticket. In
-order of likelihood: the image and ticket did not come from the same pass B run; the boot
+order of likelihood: the image and ticket did not come from the same personalize run; the boot
 arguments differ from the recipe; auto-boot was not saved. Power cycle, then
-`--from pass-b`. Never request a new ticket alone; a ticket obtained after a reset paired
+`--from personalize`. Never request a new ticket alone; a ticket obtained after a reset paired
 with the old image sent the T1 back to recovery every time.
 
-## Phase 14: 8600 stays but nothing works
+## Boot: 8600 stays but nothing works
 
 The T1 is at `8600` but exposes no HID devices after configuration 1 was selected. That is
 the degraded restore personality, not a booted OS: the image did not boot. Power cycle,
-`--from pass-b`, and open an issue with the report bundle if it repeats.
+`--from personalize`, and open an issue with the report bundle if it repeats.
 
-## Phase 14: nothing happens, still 1281
+## Boot: nothing happens, still 1281
 
-The blind memboot was not accepted. Power cycle and try `--from phase14` once more before
+The blind memboot was not accepted. Power cycle and try `--from boot` once more before
 changing anything.
 
 ## T1 in recovery after regeneration completed
@@ -120,10 +120,10 @@ The run finished, the ESP is staged, and after a power cycle the T1 is at `1281`
 is dark.
 
 - Check that `EFI/APPLE/EMBEDDEDOS` holds the three files: `sudo t1-revive status`.
-- If the files are there, run `sudo t1-revive regenerate --from phase14`. It boots the T1
+- If the files are there, run `sudo t1-revive regenerate --from boot`. It boots the T1
   from the saved pair without touching Apple. If that works but the cold boot does not,
   report it: that is the persistence case we need to hear about.
-- If the files are missing, `--from stage` while the T1 is booted, or `--from phase14` and
+- If the files are missing, `--from stage` while the T1 is booted, or `--from boot` and
   let it stage again.
 
 ## Handover to t1bridge

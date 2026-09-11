@@ -4,6 +4,21 @@ This document describes what `t1-revive regenerate` does, step by step: what eac
 what it receives, what it writes, what "success" means at that step, and how long it took in
 the rehearsal. Names only; no identifiers, no file contents.
 
+## The steps, and what they are called elsewhere
+
+The step names below are t1-revive's own. The recipe this tool grew out of, the private
+notebook, and idevicerestore each use their own vocabulary for the same work; this table is
+the only place all three appear together.
+
+| Step | What it does | Original recipe / notebook | idevicerestore / Apple term |
+| --- | --- | --- | --- |
+| `provision` | the T1 obtains its device-specific FDR identity data from Apple's FDR service | pass A | FDR provisioning |
+| `reset` (`--from reset-1`, `--from reset-2`) | the T1-only ACPI reset, back to recovery mode | FRST | the ACPI method `FRST` |
+| `personalize` | replays the provisioned data and captures the boot image personalised for this chip plus its AP ticket | pass B | personalization (TSS) |
+| `boot` | boots the T1 from that image in RAM and watches USB for a stable `05ac:8600` | phase 14 | memboot |
+| `stage` | writes the regenerated files to the ESP | stage-esp | — |
+| `handover` | hands the booted T1 to t1bridge without a reboot | handover | — |
+
 ## Background
 
 The T1 does not keep its operating system. At every boot the Mac's firmware reads
@@ -20,11 +35,11 @@ idevicerestore, libirecovery and usbmuxd under `vendor/` add exactly that. The i
 Apple's public `EmbeddedOSFirmware.pkg` (the `iBridge1,1` customer bundle, `Customer Boot`
 variant) and Apple's servers.
 
-The sequence is pass A, reset, pass B, reset, phase 14, stage, handover. It runs as one
+The sequence is provision, reset, personalize, reset, boot, stage, handover. It runs as one
 command with no reboot at any point. Every step checks the T1's USB state before touching
 it and stops on the first failure.
 
-## Step 1: pass A, FDR creation
+## Step 1: provision, the T1's own FDR data
 
 The T1 must be at `05ac:1281`. A private usbmuxd is started; a system usbmuxd is refused.
 
@@ -37,13 +52,13 @@ The T1 must be at `05ac:1281`. A private usbmuxd is started; a system usbmuxd is
 - Writes: `private/FDRData` in the state directory, mode 0600. Nothing on the ESP.
 
 Success: idevicerestore exits 0, its log says `Restore Finished`, and `FDRData` is
-non-empty and parses as a property list. After pass A the T1 sits at `05ac:8600` in a
+non-empty and parses as a property list. After this step the T1 sits at `05ac:8600` in a
 degraded restore personality (one vendor interface, no HID). That is not a booted
 EmbeddedOS; it is the restore leaving the chip where it left it. Rehearsal: 2 min 15 s.
 
-## Step 2: FRST, the T1-only reset
+## Step 2: reset, the T1-only ACPI reset (`--from reset-1`)
 
-The T1 has to be back in recovery for pass B. The tool writes the ACPI method path
+The T1 has to be back in recovery for the personalize step. The tool writes the ACPI method path
 discovered from this machine's ACPI tables (on the tested model it ends in `ASOC.FRST`) to
 `/proc/acpi/call`, provided by `acpi_call`. It refuses to run if the method is not found in
 the tables; the path is never assumed.
@@ -65,34 +80,34 @@ hazard whose outcome is unknown. `FRST` resets only the T1 and has behaved the s
 time. So the rule is absolute: `FRST` is the only reset, `SOCW` is never called, the word is
 grepped for in CI, and the runtime refuses a method path that contains it.
 
-## Step 3: pass B, replay and capture
+## Step 3: personalize, replay and capture
 
-Same restore as pass A, with two differences: the FDR store from pass A is replayed as input
-instead of being created, and the personalised preflight boot image and its AP ticket are
-captured from the same transaction.
+Same restore as the provision step, with two differences: the FDR store provisioned there is
+replayed as input instead of being created, and the personalised preflight boot image and its
+AP ticket are captured from the same transaction.
 
 - Sends: the same restore, the same conversations with TSS and the FDR service, plus the
-  pass A FDR store as the answer to the FDR requests.
-- Receives: signed images, the replayed FDR store, and the pair that phase 14 needs.
+  provisioned FDR store as the answer to the FDR requests.
+- Receives: signed images, the replayed FDR store, and the pair the boot step needs.
 - Writes: `private/combined.preflight.memboot`, `private/preflight.apticket`,
   `private/FDRData.replayed`, all 0600. Nothing on the ESP.
 
 Success: exit 0, `Restore Finished`, all three files non-empty, and the replayed store
-byte-identical to the pass A store. The image and the ticket must come from one and the same
-pass B run; a ticket requested separately after a reset produced images that looked right
+byte-identical to the provisioned store. The image and the ticket must come from one and the
+same personalize run; a ticket requested separately after a reset produced images that looked right
 and sent the T1 back to recovery every time. Rehearsal: 1 min 22 s.
 
-## Step 4: FRST again
+## Step 4: reset again (`--from reset-2`)
 
 Identical to step 2. The T1 is back at `05ac:1281` and settled.
 
-## Step 5: phase 14, boot the T1 with the captured pair
+## Step 5: boot, run the T1 from the captured pair
 
 No restore, no new ticket, no network. Over libusb to recovery mode, in the recipe's order:
 set auto-boot off and save the environment, send the saved AP ticket, upload the saved boot
 image, set the boot arguments to `rd=md0`, then issue the blind memboot command.
 
-- Sends: the pass B ticket and image, and four recovery commands.
+- Sends: the ticket and image captured by personalize, and four recovery commands.
 - Receives: nothing but USB enumeration events.
 - Writes: nothing on disk.
 
@@ -101,7 +116,7 @@ bus: the tool watches USB for 30 s and passes when `05ac:8600` appears, stays, a
 falls back to `05ac:1281`. Measured: `8600` at 7 to 8 s, stable through the window. By default the
 gate after the watch is the one the proven run used: the T1 answers as `05ac:8600` within 5 s.
 With `--strict` the full verdict is required (at least 60 of 120 samples at `8600`, none at `1281`,
-`8600` last). Likewise pass A and pass B gate on their artefacts by default and on
+`8600` last). Likewise provision and personalize gate on their artefacts by default and on
 idevicerestore's exit status only with `--strict`. The tool
 then selects USB configuration 1 host-side so the firmware personality enumerates fully: two
 UVC interfaces (the camera), two HID interfaces, and the virtual Touch Bar and sensor
@@ -110,7 +125,7 @@ the verdict line is the proof. With the stock firmware-bar driver present the ba
 
 Failure shapes, from the notes: `8600` appears and falls back to `1281` within seconds means
 iBoot rejected the image or the ticket (pair mismatch, wrong boot arguments); the fix is to
-rerun pass B, never to request a new ticket alone. `8600` stays but exposes no HID after
+rerun personalize, never to request a new ticket alone. `8600` stays but exposes no HID after
 configuration 1 means the degraded personality, not a booted OS. Stays at `1281` means the
 memboot was not accepted; power cycle and retry once before changing anything.
 
@@ -141,7 +156,7 @@ back to recovery), but it would cost a power cycle and a resume. The `cmp` after
 what lets the tool print "staged" and mean it.
 
 Success: three `verified` lines. From here on the T1 lights at every cold boot with nothing
-running. Rehearsal: seconds. Wall clock from the start of pass A to the verified ESP:
+running. Rehearsal: seconds. Wall clock from the start of provision to the verified ESP:
 4 min 56 s.
 
 ## Step 7: handover
@@ -162,11 +177,11 @@ Success: `sudo t1bridge status` rows ready, or a dark bar and the instruction to
 
 | Step | Measured |
 | --- | --- |
-| pass A | 2 min 15 s |
-| FRST | 2.4 s to recovery, plus 12 s settle |
-| pass B | 1 min 22 s |
-| FRST | as above |
-| phase 14 | 8600 at 7 s, watched 30 s |
+| provision | 2 min 15 s |
+| reset | 2.4 s to recovery, plus 12 s settle |
+| personalize | 1 min 22 s |
+| reset | as above |
+| boot | 8600 at 7 s, watched 30 s |
 | stage | seconds |
 | handover | about 60 s |
 | wiped machine to verified ESP | 4 min 56 s |

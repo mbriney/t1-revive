@@ -17,7 +17,7 @@ long, what someone holding the state directory could do, and what we can and can
 
 ## What the host sees
 
-During pass A and pass B the host is the restore client. It holds, as files under
+During the provision and personalize steps the host is the restore client. It holds, as files under
 `/var/lib/t1-revive/private/` (directory 0700, files 0600, root only):
 
 - the FDR store (`FDRData`): the Apple-signed factory data record for this chip and this
@@ -113,9 +113,9 @@ new folder off the disk, encrypted, and keep it.
 
 | Event | Permanent | Recovery |
 | --- | --- | --- |
-| a pass aborts mid-way | no | the T1 falls back to its ROM recovery mode (`05ac:1281`); power cycle, resume |
+| a restore step aborts mid-way | no | the T1 falls back to its ROM recovery mode (`05ac:1281`); power cycle, resume |
 | a wrong or interrupted write during the restore | no, by design | the boot ROM is immutable silicon; recovery lives there, as on an iPhone |
-| phase 14 boots then falls back | no | rerun pass B; never request a new ticket alone |
+| the boot step starts then falls back | no | rerun personalize; never request a new ticket alone |
 | a bad file on the ESP | no | the ROM validates what it loads; bad means recovery mode, not damage |
 | the forbidden ACPI method | unknown | never called; the runtime refuses it, CI greps for it |
 | Apple stops signing | yes | none, for anyone; hence the backup |
