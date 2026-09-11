@@ -20,7 +20,8 @@
 # that load_conf fills in only the ones that would otherwise keep the default below.
 T1R_PRESET=" ${T1R_PRESET:-} "
 for _t1r_v in T1R_PREFIX T1R_STATE T1R_LOG T1R_CACHE T1R_CONF T1R_SYSFS T1R_DMI \
-              T1R_ACPI_TABLES T1R_LSBLK_JSON T1R_NO_CONFIRM T1R_DEMO T1R_DRY_RUN; do
+              T1R_ACPI_TABLES T1R_LSBLK_JSON T1R_NO_CONFIRM T1R_DEMO T1R_DRY_RUN \
+              T1R_FIRMWARE T1R_STRICT T1R_ESP_DEV T1R_FRST_METHOD; do
   [[ -n "${!_t1r_v:-}" ]] && T1R_PRESET="$T1R_PRESET$_t1r_v "
 done
 unset _t1r_v
@@ -112,6 +113,8 @@ redact() {
     -e 's/\b(ECID|ecid|Ecid)[[:space:]]*[=:]?[[:space:]]*(0x)?[0-9A-Fa-f]+\b/\1=<id>/g' \
     -e 's/(serial[ _-]?(number|no)?[^A-Za-z0-9]{0,6})[A-Za-z0-9]{10,12}\b/\1<id>/gI' \
     -e 's/\b([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\b/<mac>/g' \
+    -e 's/(SRNM|IMEI|UDID|SRTG|NONC|SNON)[: ]*\[?[^]" ]*\]?/\1:<id>/g' \
+    -e 's/(nonce|Nonce|ticket|Ticket)[: ]*[0-9a-fA-F]{8,}/\1:<id>/g' \
     -e 's/[0-9A-Fa-f]{16,}/<hex>/g'
 }
 
@@ -153,13 +156,12 @@ open_log() {
     T1R_LOGFILE=$T1R_LOG/$name-$stamp.log
     ( umask 077; : >"$T1R_LOGFILE" ) || T1R_LOGFILE=
   fi
-  if [[ -z "$T1R_LOGFILE" ]]; then
-    if [[ "$T1R_DEMO" = 1 ]]; then
-      # demo mode without a log would swallow everything: keep the screen instead
-      warn "log directory $T1R_LOG is not writable; demo output stays on screen"
-    fi
-    return 1
+  if [[ -z "$T1R_LOGFILE" ]] && [[ "$T1R_DEMO" = 1 ]]; then
+    # Demo mode must never fall back to the full screen output. Use a private temp log, or stop.
+    T1R_LOGFILE=$(umask 077; mktemp "${TMPDIR:-/tmp}/t1-revive-$name-XXXXXX.log" 2>/dev/null) \
+      || die 1 "demo mode needs a writable log directory"
   fi
+  [[ -n "$T1R_LOGFILE" ]] || return 1
   ln -sfn "$T1R_LOGFILE" "$T1R_LOG/latest.log" 2>/dev/null
   exec 3>&1
   T1R_SCREEN_FD=3
@@ -177,6 +179,7 @@ open_log() {
 # log_close: drain the redaction pipeline (called from the EXIT trap set by open_log; other
 # libraries that install their own EXIT trap must call it themselves).
 log_close() {
+  declare -F esp_release >/dev/null 2>&1 && esp_release
   [[ -n "${T1R_LOG_PID:-}" ]] || return 0
   exec >&3 2>&3 3>&-
   wait "$T1R_LOG_PID" 2>/dev/null

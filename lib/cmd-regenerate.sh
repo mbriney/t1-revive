@@ -31,7 +31,13 @@ _regen_index() {
 }
 
 # _regen_fail STEP MSG: die 5 with the fallback for resuming at STEP.
-_regen_fail() { die 5 "$2. $(fallback_text "$1")"; }
+# _regen_fail STEP MSG: keep the step's own contract exit code (2..7) when it had one; anything
+# else is a device-state failure (5). $? must be read before any other command runs.
+_regen_fail() {
+  local rc=$?
+  case "$rc" in [2-7]) ;; *) rc=5;; esac
+  die "$rc" "$2. $(fallback_text "$1")"
+}
 
 # _regen_ensure_recovery STEP: one-shot's `[ "$(t1)" = 1281 ] || frst` guard.
 _regen_ensure_recovery() {
@@ -73,7 +79,7 @@ cmd_regenerate() {
   esac
 
   [ -n "$(frst_method)" ] || die 4 "no T1 reset method (FRST) found in the ACPI tables; the no-reboot chain cannot run here"
-  fw=$(firmware_dir) || exit 1
+  fw=$(firmware_dir) || exit "$?"
   bundle_ok "$fw"
   note "firmware bundle OK"
 
@@ -91,7 +97,7 @@ cmd_regenerate() {
   # optional: the data can be regenerated again as long as Apple signs it, and cmd_stage keeps an
   # on-disk copy of the old files under private/esp-backup-<stamp>/ before writing. We warn and
   # ask once; --force or --no-confirm skips the question.
-  read -r _ esp_mnt < <(esp_resolve)
+  esp_resolve_or_die; esp_mnt=$ESP_MNT
   if [ -n "$esp_mnt" ] && [ -d "$esp_mnt/EFI/APPLE/EMBEDDEDOS" ]; then
     if [ -z "$(backup_latest)" ]; then
       warn "the ESP already holds EFI/APPLE/EMBEDDEDOS and no off-disk backup was made with: t1-revive backup --to PATH"
@@ -119,34 +125,40 @@ cmd_regenerate() {
   fi
 
   confirm "This talks to the T1 and is not reversible. It runs the restore protocol against Apple's servers, resets the T1 twice, boots it, and writes EFI/APPLE/EMBEDDEDOS on the ESP. Start at: $from"
-  T1R_NO_CONFIRM=1; export T1R_NO_CONFIRM   # confirmed once; the steps do not ask again
+  # Each device-touching step asks again (rule 5; one-shot.sh asked before every step). --no-confirm
+  # and --demo turn all of them off at once.
   diag step=chain result=start from="$from"
 
   # -------------------------------------------------------------- chain ----
   if [ "$start" -le 1 ]; then
     step_banner "Step 1 of 4: the T1 asks Apple for its own data" "step 1/7 · provision (FDR provisioning)"
     _regen_ensure_recovery provision
+    confirm "run provision (the T1 talks to Apple and receives its FDR data)"
     run_step provision step_provision "talking to Apple's servers" || _regen_fail provision "provision failed (see the log)"
     expect_file "$priv/FDRData" 5 "provision finished but no FDRData. $(fallback_text provision)"
     note "FDRData: $(file_size "$priv/FDRData") bytes"
   fi
   if [ "$start" -le 2 ]; then
+    confirm "reset the T1 (FRST) after provision"
     run_step reset-1 step_reset "resetting the T1" || _regen_fail reset-1 "T1 reset after provision failed"
   fi
   if [ "$start" -le 3 ]; then
     step_banner "Step 2 of 4: personalising the T1's boot image" "step 3/7 · personalize (memboot + ticket capture)"
     _regen_ensure_recovery personalize
+    confirm "run personalize (captures the boot image and ticket for this T1)"
     run_step personalize step_personalize "talking to Apple's servers" || _regen_fail personalize "personalize failed (see the log)"
     expect_file "$priv/combined.preflight.memboot" 5 "personalize finished but the image is missing. $(fallback_text personalize)"
     expect_file "$priv/preflight.apticket" 5 "personalize finished but the ticket is missing. $(fallback_text personalize)"
     note "image: $(file_size "$priv/combined.preflight.memboot") bytes, ticket: $(file_size "$priv/preflight.apticket") bytes"
   fi
   if [ "$start" -le 4 ]; then
+    confirm "reset the T1 (FRST) after personalize"
     run_step reset-2 step_reset "resetting the T1" || _regen_fail reset-2 "T1 reset after personalize failed"
   fi
   if [ "$start" -le 5 ]; then
     step_banner "Step 3 of 4: booting the T1" "step 5/7 · boot (boot the T1 from the captured image)"
     _regen_ensure_recovery boot
+    confirm "boot the T1 from the captured image (watch the Touch Bar)"
     for n in t1_cfgsel appletbdrm apple_t1_ncm; do dry_q modprobe -r "$n" || true; done
     run_step boot step_boot "watch the Touch Bar" || _regen_fail boot "boot did not reach a stable 05ac:8600 (see the log)"
     dry_wait booted 5 || _regen_fail boot "T1 not at 8600 after the boot step"
@@ -156,6 +168,7 @@ cmd_regenerate() {
     t1_require booted 5 "T1 must be alive at 8600 to stage. $(fallback_text boot)"
     local -a stage_args=(); [ "$force" = 1 ] && stage_args=(--force)
     ( cmd_stage --dry-run "${stage_args[@]}" ) || die 4 "stage dry run refused (see above)"
+    confirm "write to the ESP"
     run_step stage cmd_stage "writing the boot files" "${stage_args[@]}" || _regen_fail stage "staging the ESP failed"
     # shellcheck disable=SC2012
     [ "${T1R_DEMO:-0}" = 1 ] || { [ -n "$esp_mnt" ] && ls -la "$esp_mnt/EFI/APPLE/EMBEDDEDOS" 2>/dev/null | sed 's/^/   /'; }

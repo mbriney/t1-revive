@@ -13,7 +13,7 @@ step_boot() {
   local priv fw image ticket rc sysfs
   local s8600=0 s1281=0 snone=0 last="" i s d n hid drv cfg
   prefix_env
-  fw=$(firmware_dir) || exit 1
+  fw=$(firmware_dir) || exit "$?"
   priv="${T1R_STATE:?}/private"
   image="$priv/combined.preflight.memboot"
   ticket="$priv/preflight.apticket"

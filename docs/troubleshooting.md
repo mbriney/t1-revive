@@ -62,6 +62,12 @@ ACPI tables, never assumed. Not found means either the tables could not be read 
 machine is not one the recipe applies to. Run `sudo t1-revive report` and open an issue with
 the bundle; do not try another method by hand.
 
+**`N FRST methods in the ACPI tables ... refusing to guess`, exit 4.** The tables define more
+than one method with that name and only one under an xHCI controller node is accepted
+automatically. The tool never picks one at random. If you have read the tables and know
+which is the T1's, pin it with `T1R_FRST_METHOD=\_SB....FRST` in `/etc/t1-revive/t1-revive.conf`;
+it is accepted only if it is one of the discovered candidates.
+
 **`unsupported model`, exit 4.** Only `MacBookPro13,2`, `13,3`, `14,2`, `14,3` are accepted.
 On the three untested ones the tool warns and continues. A T2 Mac or a Mac without a Touch
 Bar is out of scope.

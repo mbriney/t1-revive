@@ -12,7 +12,7 @@
 step_personalize() {
   local priv fw rc boot_args f ok
   prefix_env
-  fw=$(firmware_dir) || exit 1
+  fw=$(firmware_dir) || exit "$?"
   boot_args='rd=md0 -restore IOUSBDeviceController-configuration=standardMuxOnly'
   priv="${T1R_STATE:?}/private"
 

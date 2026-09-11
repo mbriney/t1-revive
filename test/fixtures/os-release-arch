@@ -1,0 +1,4 @@
+NAME="Synthetic Arch"
+PRETTY_NAME="Synthetic Arch (test fixture)"
+ID=arch
+BUILD_ID=rolling

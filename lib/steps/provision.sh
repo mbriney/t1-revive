@@ -11,7 +11,7 @@
 step_provision() {
   local priv fw rc boot_args
   prefix_env
-  fw=$(firmware_dir) || exit 1
+  fw=$(firmware_dir) || exit "$?"
   boot_args='rd=md0 -restore IOUSBDeviceController-configuration=standardMuxOnly'
 
   say "provision: preflight checks"

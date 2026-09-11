@@ -83,6 +83,10 @@ docs/                    how-it-works, threat-model, troubleshooting, diagnostic
 | `T1R_NO_CONFIRM` | `0` | `1` skips confirmations |
 | `T1R_DEMO` | `0` | `1` = on-camera mode: generic lines on screen, details to the log |
 | `T1R_DRY_RUN` | `0` | `1` = print what would happen; no device, no ESP, no network writes |
+| `T1R_STRICT` | `0` | `1` = stricter step gates (exit status of the restore tool, full 30 s boot verdict) |
+| `T1R_FIRMWARE` | unset | a local EmbeddedOSFirmware.pkg to use instead of downloading (checksum still verified) |
+| `T1R_ESP_DEV` | unset | pin the ESP device when two candidates look alike (conf file) |
+| `T1R_FRST_METHOD` | unset | pin the reset method when the tables define several; must be one of them (conf file) |
 
 ## Exit codes
 
@@ -135,12 +139,15 @@ model_status ID          prints: tested | untested | unsupported
                          unsupported: anything else (die 4)
 esp_candidates           prints "DEVICE MOUNTPOINT HAS_APPLE" per line for partitions with
                          PARTTYPE c12a7328-f81f-11d2-ba4b-00a0c93ec93b (from lsblk -J or T1R_LSBLK_JSON)
-esp_select               picks the single ESP (prefers one with EFI/APPLE, else the one holding
-                         /boot or /efi); prints "DEVICE MOUNTPOINT"; returns 1 if ambiguous
+esp_select               picks the single ESP: the one mounted at /boot, /efi or /boot/efi wins;
+                         only when none is, the single non-removable ESP holding EFI/APPLE;
+                         prints "DEVICE MOUNTPOINT"; returns 1 if ambiguous (T1R_ESP_DEV pins one)
 esp_mount DEVICE         mounts under $T1R_STATE/esp if not mounted; prints mountpoint
 frst_method              prints the full ACPI path of the T1 reset method (e.g.
                          \_SB.PCI0.XHC1.RHUB.ASOC.FRST) discovered from the ACPI tables in
-                         $T1R_ACPI_TABLES; empty if not found. Never calls it.
+                         $T1R_ACPI_TABLES; empty if not found, and empty (refuse, never guess)
+                         when several are defined unless exactly one sits under an xHCI node
+                         or T1R_FRST_METHOD pins one of them. Never calls it.
 ```
 
 ## Diagnostics

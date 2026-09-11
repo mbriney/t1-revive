@@ -25,12 +25,14 @@ cmd_stage() {
     esac
   done
   is_dry && dry=1
+  # A dry run must not mount anything either: make every helper see it.
+  [ "$dry" = 1 ] && { T1R_DRY_RUN=1; export T1R_DRY_RUN; }
 
   require_root
   open_log_once stage
   lock_once
   prefix_env
-  fw=$(firmware_dir) || exit 1
+  fw=$(firmware_dir) || exit "$?"
   priv="${T1R_STATE:?}/private"
   image="$priv/combined.preflight.memboot"
   fdr="$priv/FDRData"
@@ -39,6 +41,12 @@ cmd_stage() {
   [ "$dry" = 1 ] && note "*** DRY RUN: nothing will be written ***"
 
   say "stage: preflight checks"
+  # The boot marker must be newer than the image it vouches for; a marker from an earlier run
+  # says nothing about an image captured later.
+  if step_done boot && [ -s "$image" ] && [ ! "$(step_marker_dir)/boot.done" -nt "$image" ]; then
+    warn "the boot marker is older than the current image; treating the boot step as not done"
+    rm -f "$(step_marker_dir)/boot.done"
+  fi
   if ! step_done boot; then
     if [ "$force" = 1 ]; then
       warn "the boot step has not completed on this machine; --force given, staging anyway"
@@ -50,7 +58,7 @@ cmd_stage() {
   fi
 
   # The ESP must really be the ESP, mounted rw.
-  read -r _ esp_mnt < <(esp_resolve)   # esp_mount only prints in a dry run
+  esp_resolve_or_die; esp_mnt=$ESP_MNT
   esp="$esp_mnt/EFI/APPLE/EMBEDDEDOS"
   if src=$(findmnt -no SOURCE,FSTYPE,OPTIONS "$esp_mnt" 2>/dev/null); then
     case "$src" in *vfat*rw*) ;; *) die 4 "$esp_mnt is not a rw vfat mount: $src";; esac

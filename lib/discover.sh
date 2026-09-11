@@ -94,18 +94,30 @@ esp_select() {
   n=${#lines[@]}
   [[ "$n" -gt 0 ]] || return 1
   if [[ "$n" = 1 ]]; then read -r dev mp _ <<<"${lines[0]}"; printf '%s %s\n' "$dev" "$mp"; return 0; fi
-  for l in "${lines[@]}"; do
-    read -r dev mp has <<<"$l"
-    if [[ "$has" = yes ]]; then apple=$((apple + 1)); pick="$dev $mp"; fi
-  done
-  [[ "$apple" = 1 ]] && { printf '%s\n' "$pick"; return 0; }
-  pick=
+  # The ESP the machine boots from wins: the one mounted at /boot, /efi or /boot/efi. Only when
+  # no ESP is mounted there (an installer environment) does an EFI/APPLE folder break the tie,
+  # and only on a non-removable disk: a backup stick holding EFI/APPLE must never be staged.
   for l in "${lines[@]}"; do
     read -r dev mp has <<<"$l"
     case "$mp" in /boot|/efi|/boot/efi) std=$((std + 1)); pick="$dev $mp";; *) ;; esac
   done
   [[ "$std" = 1 ]] && { printf '%s\n' "$pick"; return 0; }
+  [[ "$std" -gt 1 ]] && return 1
+  pick=
+  for l in "${lines[@]}"; do
+    read -r dev mp has <<<"$l"
+    if [[ "$has" = yes ]] && ! esp_removable "$dev"; then apple=$((apple + 1)); pick="$dev $mp"; fi
+  done
+  [[ "$apple" = 1 ]] && { printf '%s\n' "$pick"; return 0; }
   return 1
+}
+
+# esp_removable DEVICE: true when the disk behind the partition is flagged removable in sysfs
+# (USB sticks); unknown counts as not removable.
+esp_removable() {
+  local d=${1#/dev/} disk
+  case "$d" in nvme*) disk=${d%p[0-9]*};; mmcblk*) disk=${d%p[0-9]*};; *) disk=${d%%[0-9]*};; esac
+  [[ "$(cat "${T1R_SYSFS:-/sys}/block/$disk/removable" 2>/dev/null)" = 1 ]]
 }
 
 # esp_mount DEVICE: prints the mountpoint, mounting under $T1R_STATE/esp when needed.
@@ -121,7 +133,16 @@ esp_mount() {
   install -d -m 0700 "$mp" || return 1
   mount -t vfat "$dev" "$mp" || return 1
   l=$(findmnt -rno FSTYPE "$mp" 2>/dev/null); [[ "$l" = vfat ]] || { umount "$mp" 2>/dev/null; return 1; }
+  T1R_ESP_MOUNTED=$mp; export T1R_ESP_MOUNTED   # esp_release unmounts it at exit
   printf '%s\n' "$mp"
+}
+
+# esp_release: unmount an ESP that esp_mount mounted itself (called from log_close at exit).
+esp_release() {
+  [[ -n "${T1R_ESP_MOUNTED:-}" ]] || return 0
+  umount "$T1R_ESP_MOUNTED" 2>/dev/null || true
+  T1R_ESP_MOUNTED=
+  return 0
 }
 
 # esp_is_writable MOUNTPOINT: rw vfat mount that root can write to.
@@ -145,9 +166,20 @@ frst_method() {
   while IFS= read -r t; do [[ -r "$t" ]] && tables+=("$t"); done < <(find "$T1R_ACPI_TABLES" -maxdepth 1 -name 'SSDT*' 2>/dev/null | sort -V)
   [[ "${#tables[@]}" -gt 0 ]] || return 0
   out=$(python3 "$walker" --method FRST "${tables[@]}" 2>/dev/null) || return 0
-  # Prefer the one under the xHCI root hub (where the T1 hangs) if several tables define one.
-  t=$(printf '%s\n' "$out" | grep -E 'XHC' | head -1)
-  [[ -n "$t" ]] || t=$(printf '%s\n' "$out" | head -1)
-  [[ -n "$t" ]] && printf '%s\n' "$t"
+  local -a cands=() xhc=()
+  mapfile -t cands < <(printf '%s\n' "$out" | sed '/^$/d' | sort -u)
+  [[ "${#cands[@]}" -gt 0 ]] || return 0
+  # An operator may pin the method (T1R_FRST_METHOD in t1-revive.conf); it must be one the
+  # tables actually define.
+  if [[ -n "${T1R_FRST_METHOD:-}" ]]; then
+    for t in "${cands[@]}"; do [[ "$t" = "$T1R_FRST_METHOD" ]] && { printf '%s\n' "$t"; return 0; }; done
+    warn "T1R_FRST_METHOD is not an FRST method defined by this machine's ACPI tables; ignoring it"
+  fi
+  if [[ "${#cands[@]}" = 1 ]]; then printf '%s\n' "${cands[0]}"; return 0; fi
+  # Several candidates: accept only a unique one under an xHCI controller node (where the T1
+  # hangs). Anything else is refused. A reset method is never guessed.
+  for t in "${cands[@]}"; do [[ "$t" =~ (^|\.)XHC[0-9]*\. ]] && xhc+=("$t"); done
+  if [[ "${#xhc[@]}" = 1 ]]; then printf '%s\n' "${xhc[0]}"; return 0; fi
+  warn "${#cands[@]} FRST methods in the ACPI tables (${#xhc[@]} under an xHCI node); refusing to guess. Pin one with T1R_FRST_METHOD in t1-revive.conf after reading the tables"
   return 0
 }

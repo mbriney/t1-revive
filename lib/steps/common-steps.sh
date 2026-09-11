@@ -174,6 +174,17 @@ step_marker_dir() { printf '%s\n' "${T1R_STATE:?}/private/steps"; }
 # step_done NAME: true if NAME finished successfully in some run.
 step_done() { [ -f "$(step_marker_dir)/$1.done" ]; }
 
+T1R_STEP_ORDER="provision reset-1 personalize reset-2 boot stage handover"
+# step_invalidate_after NAME: remove the markers of every step after NAME in chain order.
+step_invalidate_after() {
+  local after=0 s
+  for s in $T1R_STEP_ORDER; do
+    if [ "$after" = 1 ]; then rm -f "$(step_marker_dir)/$s.done"; fi
+    [ "$s" = "$1" ] && after=1
+  done
+  return 0
+}
+
 # step_banner DEMO_TEXT NORMAL_TEXT: one-shot's `[ demo ] && say A || say B`.
 step_banner() {
   if [ "${T1R_DEMO:-0}" = 1 ]; then show ""; show "$1"; else say "$2"; fi
@@ -232,7 +243,12 @@ run_step() {
     # A dry run must never leave a marker behind: `t1-revive stage` reads them as proof
     # that the T1 really booted from the personalised image.
     if is_dry; then note "(dry) would record step marker $name.done"
-    else install -d -m 700 "$(step_marker_dir)" && date +%s > "$(step_marker_dir)/$name.done"; fi
+    else
+      install -d -m 700 "$(step_marker_dir)" && date +%s > "$(step_marker_dir)/$name.done"
+      # A step that ran again invalidates every downstream proof: a new image must not be
+      # staged on the strength of an older boot marker.
+      step_invalidate_after "$name"
+    fi
     diag step="$name" result=ok elapsed="$elapsed"
   else
     diag step="$name" result=error code="$rc" t1="$(t1_state)" elapsed="$elapsed"
@@ -268,14 +284,27 @@ fallback_text() {
 # esp_resolve: the single ESP as "DEVICE MOUNTPOINT", mounting it when it is not
 # mounted (esp_mount only prints in a dry run). die 4 when it is not unambiguous.
 # Shared by cmd_regenerate (backup rule) and cmd_stage (staging target).
+# Returns 1 (after a warning) instead of dying: callers run it in a command substitution, where
+# an exit would only end the subshell and leave the caller with an empty mountpoint.
 esp_resolve() {
-  local dev='' mnt=''
-  read -r dev mnt < <(esp_select) || true
-  [ -n "$dev" ] || die 4 "cannot identify a single EFI System Partition (see: t1-revive preflight)"
+  local dev='' mnt='' sel
+  sel=$(esp_select) || { warn "cannot identify a single EFI System Partition (see: t1-revive preflight)"; return 1; }
+  read -r dev mnt <<<"$sel"
+  [ -n "$dev" ] || { warn "cannot identify a single EFI System Partition (see: t1-revive preflight)"; return 1; }
   if [ -z "$mnt" ] || [ "$mnt" = "-" ]; then
-    mnt=$(esp_mount "$dev") || die 4 "could not mount the ESP $dev"
+    mnt=$(esp_mount "$dev" | tail -1) || { warn "could not mount the ESP $dev"; return 1; }
+    [ -n "$mnt" ] || { warn "could not mount the ESP $dev"; return 1; }
   fi
   printf '%s %s\n' "$dev" "$mnt"
+}
+
+# esp_resolve_or_die: the checked form for the commands; sets ESP_DEV and ESP_MNT.
+esp_resolve_or_die() {
+  local line
+  line=$(esp_resolve) || die 4 "cannot identify a single EFI System Partition (see: t1-revive preflight)"
+  line=${line##*$'\n'}
+  read -r ESP_DEV ESP_MNT <<<"$line"; export ESP_DEV ESP_MNT
+  [ -n "${ESP_MNT:-}" ] || die 4 "cannot identify a single EFI System Partition (see: t1-revive preflight)"
 }
 
 # open_log_once NAME: start the command log unless one is already open (the stage and
@@ -290,13 +319,8 @@ open_log_once() {
 # redact_restore: the on-screen filter the proven scripts put after tee
 # (the log filter in common.sh redacts again; this one also covers the
 # restore protocol's tag names).
-redact_restore() {
-  sed -u -E \
-    -e 's/(ECID|ecid)[: ]*[0-9a-fA-Fx]+/\1:<redacted>/g' \
-    -e 's/[0-9a-fA-F]{16,}/<hex-redacted>/g' \
-    -e 's/(SRNM|IMEI|UDID|SRTG|NONC|SNON)[: ]*\[?[^]" ]*\]?/\1:<redacted>/g' \
-    -e 's/(nonce|Nonce|ticket|Ticket)[: ]*[0-9a-fA-F]+/\1:<redacted>/g'
-}
+# redact_restore: the restore pipelines' filter; the same rules now live in common.sh's redact.
+redact_restore() { redact; }
 
 # restore_report RUNNER_LOG: the "=== result ===" lines shared by the passes.
 restore_report() {

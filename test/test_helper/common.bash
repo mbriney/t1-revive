@@ -30,6 +30,16 @@ t1r_env() {
   t1r_use_dmi 14_3
   export T1R_ACPI_TABLES=$T1R_FIXTURES/acpi-none   # does not exist: frst_method must cope
   export TERM=dumb NO_COLOR=1
+  t1r_save_bats_run
+}
+
+# t1r_save_bats_run: lib/steps/common-steps.sh defines a function called `run` (one-shot.sh's
+# step runner), which shadows bats' own `run` helper the moment that file is sourced. Copy
+# bats' helper to t1r_run first; tests that source the step code use t1r_run throughout.
+t1r_save_bats_run() {
+  declare -F run >/dev/null || return 0
+  declare -F t1r_run >/dev/null && return 0
+  eval "t1r_run() $(declare -f run | tail -n +2)"
 }
 
 # t1r_use_sysfs NAME   -> T1R_SYSFS=test/fixtures/sysfs-NAME (recovery|booted-cfg1|booted-cfg2|none)
@@ -73,4 +83,100 @@ assert_contains() {  # assert_contains HAYSTACK NEEDLE
 }
 refute_contains() {  # refute_contains HAYSTACK NEEDLE
   [[ $1 != *"$2"* ]] || { printf 'did not expect %q in:\n%s\n' "$2" "$1" >&2; return 1; }
+}
+
+# --- fixtures and stubs for the command-level tests -----------------------------------
+# t1r_use_osrelease NAME -> T1R_OS_RELEASE=test/fixtures/os-release-NAME (arch|other)
+t1r_use_osrelease() { export T1R_OS_RELEASE=$T1R_FIXTURES/os-release-$1; }
+
+# t1r_stub_prefix: fill $T1R_PREFIX with stub executables that echo their arguments and
+# append their argv to $T1R_TEST_CALLS, so a test can assert that no device command ran.
+# The two marker strings check_idevicerestore greps for are in the stub, as comments.
+t1r_stub_prefix() {
+  local b
+  export T1R_TEST_CALLS=$T1R_TMP/calls.log
+  : >"$T1R_TEST_CALLS"
+  mkdir -p "$T1R_PREFIX/bin" "$T1R_PREFIX/sbin" "$T1R_PREFIX/lib" "$T1R_PREFIX/lib64"
+  for b in bin/idevicerestore bin/irecovery bin/plistutil sbin/usbmuxd; do
+    cat >"$T1R_PREFIX/$b" <<'STUB'
+#!/usr/bin/env bash
+# marker for check_idevicerestore: T1: EmbeddedOS restore options applied
+# marker for check_idevicerestore: T1: phase 14 mode
+printf '%s %s\n' "${0##*/}" "$*" >>"${T1R_TEST_CALLS:-/dev/null}"
+printf 'stub %s\n' "${0##*/}"
+printf '%s\n' "$@"
+exit 0
+STUB
+    chmod +x "$T1R_PREFIX/$b"
+  done
+}
+
+# t1r_calls: everything the stub executables were asked to do (empty when nothing ran).
+t1r_calls() { cat "${T1R_TEST_CALLS:-/dev/null}" 2>/dev/null; }
+
+# t1r_fake_esp TEMPLATE: make $T1R_TMP/esp the mountpoint of a synthetic ESP and point
+# T1R_LSBLK_JSON at test/fixtures/TEMPLATE.json.tmpl instantiated with it. Sets T1R_ESP_MNT.
+t1r_fake_esp() {
+  local tmpl=${1:-lsblk-one-esp-mounted}
+  export T1R_ESP_MNT=$T1R_TMP/esp
+  mkdir -p "$T1R_ESP_MNT"
+  sed "s|@ESP_MNT@|$T1R_ESP_MNT|" "$T1R_FIXTURES/$tmpl.json.tmpl" >"$T1R_TMP/lsblk.json"
+  export T1R_LSBLK_JSON=$T1R_TMP/lsblk.json
+}
+
+# t1r_esp_apple_data: a synthetic EFI/APPLE/EMBEDDEDOS on the fake ESP. Obviously fake
+# content: no device data, no long hex runs.
+t1r_esp_apple_data() {
+  local d=${T1R_ESP_MNT:?t1r_fake_esp first}/EFI/APPLE/EMBEDDEDOS
+  mkdir -p "$d"
+  printf 'SYNTHETIC-FDR-PLACEHOLDER-NOT-DEVICE-DATA\n' >"$d/FDRData"
+  printf '<plist><dict><key>synthetic</key><true/></dict></plist>\n' >"$d/version.plist"
+}
+
+# t1r_step_marker NAME: the done marker run_step would write for step NAME.
+t1r_step_marker() {
+  install -d -m 700 "$T1R_STATE/private/steps"
+  date +%s >"$T1R_STATE/private/steps/$1.done"
+}
+
+# t1r_esp_snapshot: remember the exact content of the fake ESP (paths and hashes).
+t1r_esp_snapshot() {
+  export T1R_ESP_SNAP=$T1R_TMP/esp-snapshot
+  t1r_esp_digest >"$T1R_ESP_SNAP"
+}
+
+# t1r_esp_digest: "sha256  path" for every file on the fake ESP, sorted.
+t1r_esp_digest() {
+  ( cd "${T1R_ESP_MNT:?t1r_fake_esp first}" && find . -type f -exec sha256sum {} + 2>/dev/null | sort ) || true
+}
+
+# t1r_esp_unchanged: fail when anything on the fake ESP was added, removed or rewritten
+# since t1r_esp_snapshot.
+t1r_esp_unchanged() {
+  local now
+  now=$(t1r_esp_digest)
+  [[ $now == "$(cat "${T1R_ESP_SNAP:?t1r_esp_snapshot first}")" ]] || {
+    printf 'the fake ESP changed.\n--- before ---\n%s\n--- after ---\n%s\n' \
+      "$(cat "$T1R_ESP_SNAP")" "$now" >&2; return 1; }
+}
+
+# t1r_no_step_markers: fail when a dry run left a step marker behind.
+t1r_no_step_markers() {
+  local found
+  found=$(find "$T1R_STATE/private/steps" -type f 2>/dev/null) || found=''
+  [[ -z $found ]] || { printf 'step markers were recorded:\n%s\n' "$found" >&2; return 1; }
+}
+
+# t1r_diag_lines: the structured diagnostic lines this run appended to the logs.
+t1r_diag_lines() {
+  grep -h '^t1-revive-diagnostic ' "$T1R_LOGFILE" "$T1R_LOG"/*.log 2>/dev/null | sort -u || true
+}
+
+# t1r_stub_bin NAME: create $T1R_TMP/bin/NAME from stdin and put that directory first in PATH.
+# For host commands whose output would otherwise make a test depend on this machine.
+t1r_stub_bin() {
+  mkdir -p "$T1R_TMP/bin"
+  cat >"$T1R_TMP/bin/$1"
+  chmod +x "$T1R_TMP/bin/$1"
+  case ":$PATH:" in *":$T1R_TMP/bin:"*) ;; *) PATH=$T1R_TMP/bin:$PATH; export PATH;; esac
 }
