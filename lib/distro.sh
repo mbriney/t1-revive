@@ -35,11 +35,16 @@ _pacman() {  # pacman with Omarchy's direct-pacman guard lifted when Omarchy is 
   else env LC_ALL=C pacman "$@"; fi
 }
 
-# distro_install PKG...: install packages (no-op for the ones already present).
+# distro_install PKG...: install packages (no-op for the ones already present). Only the missing
+# ones are handed to pacman, so an up-to-date system prints no "is up to date -- skipping" noise.
 distro_install() {
   [[ $# -gt 0 ]] || return 0
   case "$(distro_family)" in
-    arch) run_cmd _pacman -S --needed --noconfirm "$@";;
+    arch)
+      local -a missing=() p
+      for p in "$@"; do pacman -Q "$p" >/dev/null 2>&1 || missing+=("$p"); done
+      [[ ${#missing[@]} -gt 0 ]] || return 0
+      run_cmd _pacman -S --needed --noconfirm "${missing[@]}";;
     *) die 1 "package installation is only implemented for Arch-based systems (this is '$(distro_id)'). Install the equivalents of: $* - then rerun without --install.";;
   esac
 }
