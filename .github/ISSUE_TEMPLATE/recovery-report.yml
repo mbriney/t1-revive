@@ -93,7 +93,7 @@ body:
       options:
         - label: I read the bundle and this issue contains no serial numbers, ECIDs, nonces, tickets, file contents from EFI/APPLE, keybags, hostnames, usernames, paths, or addresses.
           required: true
-        - label: A backup was taken (or the tool confirmed there was nothing to back up) before any device-touching step.
+        - label: An off-disk copy of EFI/APPLE was taken before any device-touching step, or the tool confirmed there was nothing to copy, or I acknowledged the warning and continued without one.
           required: false
   - type: dropdown
     id: credit

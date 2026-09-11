@@ -59,7 +59,7 @@ packaging/arch/PKGBUILD  AUR recipe (builds vendor/ from pinned tags; nothing fr
 contrib/stick/           install-stick files: README.txt, install-nvram.sh, nvram template
 skills/tester/SKILL.md   the tester-facing agent skill
 test/                    bats tests + fixtures; test/fixtures/** holds synthetic sysfs/lsblk/DMI/ACPI
-docs/                    how-it-works, threat-model, troubleshooting, diagnostics, hardware-validation
+docs/                    how-it-works, threat-model, troubleshooting, diagnostics, hardware-validation, omarchy, firmware, install-stick
 .github/                 issue templates, CI workflow
 ```
 
@@ -89,7 +89,7 @@ docs/                    how-it-works, threat-model, troubleshooting, diagnostic
 | 1 | generic failure |
 | 2 | usage |
 | 3 | preflight failed (fix the NO lines) |
-| 4 | refused for safety (unsupported model, no backup confirmed, unexpected state) |
+| 4 | refused for safety (unsupported model, confirmation declined, unexpected state) |
 | 5 | device in an unexpected state (see message; fallback: full power cycle) |
 | 6 | network / Apple service failure |
 | 7 | reboot needed (kernel changed) |

@@ -6,6 +6,6 @@ contact_links:
   - name: Touch Bar or Touch ID problems after a successful regeneration
     url: https://github.com/standardagents/t1bridge/issues
     about: Once the T1 is booted and staged, the driver stack is t1bridge. Report there with t1bridge-diagnostic lines.
-  - name: Omarchy installer (omarchy-t1) problems
-    url: https://github.com/niconistal/omarchy-t1/issues
-    about: Stage 1 / stage 2 installer failures on Omarchy with an intact EFI/APPLE folder.
+  - name: Omarchy specifics for t1bridge
+    url: https://github.com/niconistal/t1-revive/blob/main/docs/omarchy.md
+    about: The firewall rule, the PAM lines and the known quirks that t1bridge's own README does not cover on Omarchy.

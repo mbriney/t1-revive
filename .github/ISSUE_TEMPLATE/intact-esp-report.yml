@@ -1,5 +1,5 @@
 name: Intact-ESP report
-description: EFI/APPLE is present on your Mac. Report how the Touch Bar / Touch ID stack (t1bridge, omarchy-t1) behaved, with or without t1-revive.
+description: EFI/APPLE is present on your Mac. Report how the Touch Bar / Touch ID stack (t1bridge) behaved, with or without t1-revive.
 title: "[MacBookProXX,Y] booted: <one line>"
 labels: ["intact-esp"]
 body:
@@ -50,17 +50,17 @@ body:
   - type: dropdown
     id: stage1
     attributes:
-      label: Installer stage 1 (packages and services)
+      label: t1bridge install (packages, services, DKMS modules)
       options:
         - ok
         - failed
-        - not used (manual t1bridge setup)
+        - not attempted
     validations:
       required: true
   - type: dropdown
     id: powercycle
     attributes:
-      label: Full power cycle done between stages (shutdown, not reboot)?
+      label: Full power cycle after the t1bridge install (shutdown, not reboot)?
       options:
         - "yes"
         - "no"
@@ -68,11 +68,11 @@ body:
   - type: dropdown
     id: stage2
     attributes:
-      label: Installer stage 2 (renderer, firewall, import, enroll, PAM)
+      label: Bring-up (renderer, firewall rule, import, enroll, PAM)
       options:
         - ok
         - failed
-        - not used
+        - not attempted
         - not reached
     validations:
       required: true

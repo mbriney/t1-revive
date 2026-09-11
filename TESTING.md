@@ -9,7 +9,7 @@ are, and what happens with a report.
 | You have | What to do |
 | --- | --- |
 | A 2016/2017 Touch Bar MacBook Pro (`MacBookPro13,2`, `13,3`, `14,2`, `14,3`) on Arch or Omarchy, `lsusb` shows `05ac:1281`, and `EFI/APPLE/EMBEDDEDOS` is gone | You are the reason this exists. File a [Wiped-ESP registration](https://github.com/niconistal/t1-revive/issues/new?template=wiped-esp-registration.yml) first, then follow the reply. |
-| The same Mac, `EFI/APPLE/EMBEDDEDOS/FDRData` exists, Touch Bar working or not | Run `t1-revive status` and `sudo t1-revive report`, use the t1bridge / omarchy-t1 install, and file an [Intact-ESP report](https://github.com/niconistal/t1-revive/issues/new?template=intact-esp-report.yml) whether it worked or not. Do not regenerate; you have nothing to regenerate. |
+| The same Mac, `EFI/APPLE/EMBEDDEDOS/FDRData` exists, Touch Bar working or not | Run `t1-revive status` and `sudo t1-revive report`, use the t1bridge install (on Omarchy, with [docs/omarchy.md](docs/omarchy.md)), and file an [Intact-ESP report](https://github.com/niconistal/t1-revive/issues/new?template=intact-esp-report.yml) whether it worked or not. Do not regenerate; you have nothing to regenerate. |
 | A `13,2`, `13,3` or `14,2` in either state | Doubly wanted: the tool warns `untested` on these and continues; your report turns that into `tested` or into a documented difference. |
 | A `14,3` | Wanted too: a second machine of the proven model tells us what is machine-specific. |
 | A T2 Mac (2018 and later) or a Mac without a Touch Bar | Out of scope. See the t2linux project. |
@@ -26,12 +26,17 @@ are, and what happens with a report.
    names the documented next step, and files the report under your login after you have
    read it. It is forbidden from running the device-touching commands for you; you type
    those.
-3. **Backup first.** `t1-revive backup` runs before anything touches the device, and the
-   tool refuses to regenerate without a confirmed backup. Copy the backup off the disk,
-   encrypted. A reinstall is exactly the event that destroys the original.
+3. **Backup if you still can.** `t1-revive backup --to PATH` runs before anything touches
+   the device, and copies `EFI/APPLE` off the disk if any of it is still there. The
+   destination does not have to be a stick: another machine, a phone, a cloud folder. It is
+   recommended, not required; `regenerate` warns and asks for confirmation if no backup was
+   taken, and continues. Keep the copy encrypted. A reinstall is exactly the event that
+   destroys the original, and Apple withdrawing the signing is the one thing regeneration
+   cannot get you past.
 4. **Password login stays.** Nothing in t1-revive touches PAM. When you later enrol a
-   fingerprint with t1bridge or omarchy-t1, keep a root shell open and test the password
-   fallback for `sudo` and the lock screen before you close it.
+   fingerprint with t1bridge, keep a root shell open and test the password fallback for
+   `sudo` and the lock screen before you close it. On Omarchy the exact PAM lines and that
+   warning are in [docs/omarchy.md](docs/omarchy.md).
 5. **Confirmations stay on.** `--no-confirm` and `--demo` exist for the maintainer's
    rehearsals and recordings. A tester never uses them.
 6. **Full power cycle means shutdown**, wait 20-30 seconds, power on. A reboot leaves

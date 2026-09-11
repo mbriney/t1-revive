@@ -170,7 +170,7 @@ Success: `sudo t1bridge status` rows ready, or a dark bar and the instruction to
 | stage | seconds |
 | handover | about 60 s |
 | wiped machine to verified ESP | 4 min 56 s |
-| wiped machine to sudo by touch, with omarchy-t1 | about 10 min, zero restarts |
+| wiped machine to sudo by touch, t1-revive then t1bridge | about 10 min, zero restarts |
 
 Measured on one MacBookPro14,3 on 2026-09-07, and again from a fresh Omarchy install on
 2026-09-09.

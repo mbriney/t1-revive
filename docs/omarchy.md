@@ -1,0 +1,142 @@
+# t1bridge on Omarchy: the three things its README does not cover
+
+Install t1bridge from its own README:
+[standardagents/t1bridge](https://github.com/standardagents/t1bridge). It ships signed
+packages for Arch and Omarchy, and its docs are the authority on everything below the
+surface. This page is the Omarchy delta only: a firewall rule, the PAM wiring, and the
+quirks we hit on a real Omarchy machine. Nothing here is a fork of the installer and
+nothing here replaces a t1bridge command.
+
+All of it belongs upstream. Issues and pull requests are being filed; until they land,
+this page is the written-down version.
+
+Verified on one MacBookPro14,3, Omarchy 4.0.2, kernel 7.1.9.
+
+## 1. The firewall rule
+
+t1bridge's xART service listens on inbound IPv6 TCP 61500, on the T1's own private USB
+network link. Its setup doc says to permit that and to scope any exception to that
+interface. On Omarchy, ufw is active and default-deny, so a first enrollment times out and
+then fails immediately until the rule exists. `xart: ready` means the service runs, not
+that the T1 can reach it.
+
+The interface is driven by `apple_t1_ncm` and its name is assigned at enumeration, so read
+it rather than hard-coding it:
+
+```sh
+for d in /sys/class/net/*; do
+  [ "$(basename "$(readlink -f "$d/device/driver" 2>/dev/null)")" = apple_t1_ncm ] &&
+    basename "$d"
+done
+```
+
+`sudo t1bridge status` also reports it. With that name in `$ncm`, one rule:
+
+```sh
+sudo ufw allow in on "$ncm" proto tcp from fe80::/10 to any port 61500 comment 't1bridge xART (T1 link only)'
+```
+
+Scoped to that interface and to link-local sources. Never open 61500 on Wi-Fi, on
+Ethernet, or on all interfaces, and do not save the interface name into a portable rule
+set: it can differ on the next machine or the next boot.
+
+## 2. The PAM lines
+
+t1bridge deliberately ships no PAM files. Omarchy has its own fingerprint lines, applied
+by `omarchy-setup-security-fingerprint`. Do not run that command here: alongside the PAM
+edits it installs the stock `fprintd` and `libfprint` packages, which would replace
+t1bridge's matched pair and break Touch ID. Apply only the PAM half, by hand.
+
+Before you edit anything, open a root shell in a second terminal and leave it open. Test
+the password fallback for `sudo` and for the lock screen before you close it.
+
+Top of `/etc/pam.d/sudo`, in this order, above the existing lines:
+
+```
+auth      [success=1 default=ignore] pam_exec.so quiet /usr/bin/omarchy-hw-laptop-closed
+auth      sufficient pam_fprintd.so
+```
+
+The first line is the clamshell gate. When the lid is closed the sensor is unreachable, so
+it skips the fingerprint line and the stack falls through to the password. The second line
+is `sufficient`, not `required`, so a failed or cancelled touch still reaches `pam_unix`.
+Leave every existing line in the file untouched; those lines are the password fallback.
+
+`/etc/pam.d/polkit-1` gets the same two lines at the top. If the file does not exist,
+create it:
+
+```
+auth      [success=1 default=ignore] pam_exec.so quiet /usr/bin/omarchy-hw-laptop-closed
+auth      sufficient pam_fprintd.so
+auth      required pam_unix.so
+
+account   required pam_unix.so
+password  required pam_unix.so
+session   required pam_unix.so
+```
+
+The lock screen reads its own file, `/etc/pam.d/omarchy-lock-fingerprint`:
+
+```
+#%PAM-1.0
+auth       required                    pam_fprintd.so
+account    include                     system-local-login
+```
+
+This one is `required` on purpose: it is a fingerprint-only path the lock screen offers
+next to its normal password path, not a replacement for it.
+
+Apply the lines only after a finger is enrolled and `fprintd-verify` matches. Then, in the
+terminal that still has the root shell next to it:
+
+```sh
+sudo -k; sudo true          # by touch
+sudo -k; sudo true          # again, cancel the touch, then type the password
+```
+
+Lock the screen and test both ways too. To back out, delete every line mentioning
+`pam_fprintd.so` or `omarchy-hw-laptop-closed` from `sudo` and `polkit-1`, and remove
+`/etc/pam.d/omarchy-lock-fingerprint`.
+
+## 3. Known quirks on Omarchy
+
+**A failed keybag unit blocks enrollment.** If `t1bridge-keybag.service` was left in the
+`failed` state, for instance by a crash loop before a reinstall, the broker's relay check
+errors out before enrollment reaches the enclave. Clear it first:
+
+```sh
+sudo systemctl reset-failed t1bridge-keybag.service t1-touchid-auth.service
+```
+
+**The first enrollment can fail once.** `enroll-unknown-error` on the very first attempt
+means the keybag is still being bootstrapped. Restart the broker and try once more:
+
+```sh
+sudo systemctl restart t1-touchid-auth.service
+fprintd-enroll -f right-index-finger
+```
+
+A second failure is real. Check `sudo t1bridge status` for `xart: ready` and check the
+firewall rule above.
+
+**Touch ID stops after the machine sat locked overnight.** `t1bridge-keybag.service`
+restarts every 2 s with "load biometric keybag failed". The lock screen retries the
+fingerprint every 30 s and a long run of timeouts wedges the enclave session. Fix: full
+shutdown, then power on. A reboot is not enough. Password login is never affected. Do not
+delete `/var/lib/t1bridge` to clear it. Reported upstream.
+
+**The Touch Bar stays dark until you log out and back in.** The renderer runs under your
+systemd user manager, which fixed its supplementary groups when the session started, before
+the `t1bridge` group existed. Log out and back in, then the bar lights. Touch ID does not
+depend on the renderer and works before that.
+
+## 4. No reboot needed after regeneration
+
+`t1-revive regenerate` leaves the T1 booted and the ESP staged. `t1-revive handover`
+re-enumerates the device so t1bridge's configuration selector picks it up, with no restart
+of anything. So the order that works in one sitting is: regenerate, install t1bridge,
+`sudo t1-revive handover`, then enroll.
+
+A plain reboot works just as well. The firmware loads the staged files at boot and
+t1bridge takes the T1 from there. Use whichever you prefer; nothing downstream depends on
+the choice.

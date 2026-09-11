@@ -41,9 +41,9 @@ still have any copy of your EFI partition anywhere, keep it safe and tell the to
 is; with that copy you may not need regeneration at all.
 
 **Can I run it if my Touch Bar works?** There is no need, and the tool refuses: a T1 at
-`05ac:8600` with the `EMBEDDEDOS` folder present has nothing to regenerate, and a machine
-with data but no confirmed off-disk backup is stopped at the backup gate. What you should
-do instead is copy `EFI/APPLE` off the disk today.
+`05ac:8600` with the `EMBEDDEDOS` folder present has nothing to regenerate. What you should
+do instead is copy `EFI/APPLE` off the disk today, with `t1-revive backup --to PATH` or by
+hand.
 
 **Why not just reinstall macOS?** You can. A macOS restore through a complete first boot
 regenerates the same data, and if you have macOS or a second Mac and the patience, that path
@@ -92,8 +92,9 @@ machine works offline, like on macOS.
 **What if Apple stops signing?** Then regeneration stops working for everyone, macOS
 reinstalls included, and a wiped T1 with no backup becomes unrecoverable. Apple does stop
 signing old firmware. This is the one permanent scenario we know of, it is external, and it
-is why the backup step comes first and why the README tells you to copy the new folder off
-the disk as soon as it exists.
+is why the backup step comes first, and why the README tells you to copy the new folder off
+the disk as soon as it exists. An off-disk copy is the only thing that survives it. The copy
+`stage` keeps under the state directory does not: the disk is what a reinstall erases.
 
 **What data is sent to Apple?** What a restore sends: the chip's identity and nonces, so the
 servers can sign for that chip. Nothing about your files or your fingerprints. Fingerprints
@@ -103,8 +104,8 @@ never leave the enclave. See [threat-model.md](threat-model.md).
 runs. The T1's boot ROM is immutable and its recovery mode lives there, so an interrupted
 step leaves the chip in recovery, which is where a wiped machine already is. The tool never
 calls the one ACPI method known to freeze the host. That is different from promising there
-is none, which is why the tool comes with a backup gate, confirmations, and a tested table
-with one row.
+is none, which is why the tool asks you to back up, confirms every device-touching step, and
+ships a tested table with one row.
 
 **Is this legal?** It uses public Apple services the way Apple's own installer does, with
 open-source tooling that has restored iPhones for over a decade, and nothing of Apple's is

@@ -56,9 +56,11 @@ person types every command that touches the T1.
 **`recovery`** (`05ac:1281`)
 - `esp[n].embeddedos: no` on every ESP: the wiped case, the reason this tool exists.
   Path: `t1-revive preflight` (fix every `NO` line; exit 3 means stop and fix),
-  `t1-revive backup` (even a wiped ESP gets backed up: it proves the backup path works
-  and preserves whatever else is there), then the person types
-  `sudo t1-revive regenerate` after reading the README caution.
+  `t1-revive backup --to PATH` (recommended, not required; any destination off this disk,
+  a stick is only one option), then the person types `sudo t1-revive regenerate` after
+  reading the README caution. Without a backup `regenerate` warns and asks for one
+  confirmation; it does not stop. Say that plainly rather than presenting the backup as a
+  gate.
 - `esp[n].embeddedos: yes` with all three files present: the firmware had data and the T1
   still sits in recovery. Do not regenerate yet. Possible causes: the files are from a
   different Mac, a stale or truncated pair, or the ESP is not the one the firmware reads
@@ -77,9 +79,9 @@ person types every command that touches the T1.
 
 **`booted`, `t1-config: 2`**
 - t1bridge owns the device. Regeneration is neither needed nor possible from here.
-- Problems now are Touch Bar / Touch ID problems: read `sudo t1bridge status`, use the
-  t1bridge and omarchy-t1 documentation, and file there, not here, unless the ESP files
-  are missing (then: stage, as above).
+- Problems now are Touch Bar / Touch ID problems: read `sudo t1bridge status`, use
+  t1bridge's own documentation (on Omarchy, also `docs/omarchy.md` in this repository),
+  and file there, not here, unless the ESP files are missing (then: stage, as above).
 
 ## Known failure modes and their documented fixes
 
@@ -126,15 +128,16 @@ Stage / handover / persistence:
   failure, the most valuable report there is. Meanwhile, after a power cycle,
   `sudo t1-revive regenerate --from phase14` boots the T1 for this session.
 
-After handover, t1bridge side (documented in omarchy-t1 and t1bridge, not here):
+After handover, t1bridge side (documented by t1bridge, plus `docs/omarchy.md` for the
+Omarchy specifics, not here):
 - `enroll-unknown-error` on the first enrollment: the keybag bootstraps; one retry.
 - a touch seems ignored: the sensor arms about a second after the prompt; touch after the
   prompt shows and hold still.
 - Touch ID stops after hours locked, keybag service restarting: full shutdown and power on.
   Password login is never affected.
-- older t1bridge rejects the fresh `FDRData` (3-byte offset table): update t1bridge or use
-  omarchy-t1's normaliser. Never edit the file by hand.
-- import fails while `/boot` is mounted: import with an explicit path (omarchy-t1 does).
+- older t1bridge rejects the fresh `FDRData` (3-byte offset table): update t1bridge, 0.1.6
+  and later read it directly. Never edit the file by hand.
+- import fails while `/boot` is mounted: import with an explicit path.
 - Sleep/wake does not work with the T1 stack for anyone yet. Not a report.
 
 ## Reporting flow

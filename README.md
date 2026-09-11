@@ -19,8 +19,9 @@ Touch ID.
 >   restoring a previous copy of `EFI/APPLE` if you have one.
 > - It depends on Apple's servers. The T1 authenticates to Apple's signing service and
 >   fetches its factory data from Apple's FDR service. If Apple stops signing this firmware,
->   regeneration stops working for everyone, macOS reinstalls included. That is why the
->   backup step comes first and is not optional.
+>   regeneration stops working for everyone, macOS reinstalls included. That is the one
+>   permanent scenario, and the reason an off-disk copy of `EFI/APPLE` is worth taking while
+>   the folder still exists.
 > - Never run it unattended. Every device-touching step asks before it proceeds. Stay at
 >   the keyboard, on mains power, and do not let the machine sleep.
 > - Run it only on `MacBookPro13,2`, `13,3`, `14,2` or `14,3`. Anything else is refused.
@@ -51,10 +52,8 @@ handle if you want it there. See [Testing and reporting](#testing-and-reporting)
   distributions fail clearly at preflight; the restore itself is distribution-neutral and
   packaging help is welcome.
 - Root through `sudo`, mains power, and a network path to Apple: `gs.apple.com` and
-  `swcdn.apple.com` over HTTPS. A fresh Omarchy on a 14,3 may have no Wi-Fi at all; see
-  [docs/install-stick.md](docs/install-stick.md) for the fix.
-- A USB stick or another machine for the backup. The tool refuses to regenerate until you
-  have confirmed a backup off this disk.
+  `swcdn.apple.com` over HTTPS. A fresh install on the 2017 15-inch can come up with no
+  Wi-Fi at all; see the appendix at the end of this page.
 - Kernel headers for the running kernel and `acpi_call-dkms`. Preflight installs them and
   tells you to reboot if the kernel changed (exit code 7).
 - No system `usbmuxd` running. Preflight checks.
@@ -75,24 +74,34 @@ bash build.sh          # builds the pinned libimobiledevice forks into prefix/
 sudo bin/t1-revive version
 ```
 
-Nothing from Apple is in the repository or the package. The firmware package
-`EmbeddedOSFirmware.pkg` is downloaded from Apple's CDN at run time and checked against a
-pinned checksum. For a machine with no network after a fresh install, the install stick
-carries the tool and the Wi-Fi fix: [docs/install-stick.md](docs/install-stick.md).
+Those two are the install path. Nothing from Apple is in the repository or the package.
+The firmware package `EmbeddedOSFirmware.pkg` is downloaded from Apple's CDN at run time
+and checked against a pinned checksum.
 
 ## The flow
 
 ```sh
 sudo t1-revive preflight                    # read-only checks; installs the few packages
-sudo t1-revive backup --to /path/to/usb     # copies EFI/APPLE off this disk if any of it exists
+sudo t1-revive backup --to PATH             # recommended; copies EFI/APPLE off this disk if it exists
 sudo t1-revive regenerate                   # pass A, reset, pass B, reset, phase 14, stage, handover
 ```
 
-Then install t1bridge. On Omarchy, [omarchy-t1](https://github.com/niconistal/omarchy-t1)
-does that in one command; elsewhere follow t1bridge's own README. If t1bridge is already
-installed when `regenerate` finishes, the last step hands the booted T1 to it without a
-reboot. If it is not, install it and do one full power cycle; the firmware loads the staged
-files on its own.
+The backup step is recommended, not required. If any of `EFI/APPLE` still exists, copy it
+somewhere that is not this disk: another machine over `scp`, a phone, a cloud folder, an
+external drive. Any destination the tool can write to works. Regeneration produces the
+data again whenever it is needed, as long as Apple still signs it, and `stage` keeps an
+on-disk copy of whatever `EMBEDDEDOS` files it is about to overwrite. An off-disk copy
+covers the one scenario neither of those covers: Apple withdrawing the signing. If the
+folder is already gone there is nothing to copy, and `regenerate` warns and asks you to
+confirm before it continues.
+
+Then install t1bridge, from
+[its own README](https://github.com/standardagents/t1bridge). It ships signed packages for
+Arch and Omarchy. On Omarchy, three things its README does not cover are written up in
+[docs/omarchy.md](docs/omarchy.md): the firewall rule, the PAM lines, and the known quirks.
+If t1bridge is already installed when `regenerate` finishes, the last step hands the booted
+T1 to it without a reboot. If it is not, install it and do one full power cycle; the
+firmware loads the staged files on its own.
 
 `regenerate` asks before every step that touches the device. Pass `--no-confirm` to skip the
 questions, `--dry-run` to print what would happen without touching the device, the ESP or
@@ -147,9 +156,9 @@ reinstall is exactly the event that destroys it.
 - [t1bridge](https://github.com/standardagents/t1bridge) by Andrew Boyd: Touch Bar, camera,
   Touch ID, with the Secure Enclave doing the matching. Touch ID enrolls on regenerated data
   and persists across reboot; t1bridge 0.1.6 or later reads the T1's FDRData directly.
-- [omarchy-t1](https://github.com/niconistal/omarchy-t1): the Omarchy installer for t1bridge
-  (packages, firewall rule on the T1 link, import, enrollment, PAM for sudo, polkit and the
-  lock screen, with password fallback).
+- [docs/omarchy.md](docs/omarchy.md): what t1bridge's README leaves out on Omarchy. The
+  ufw rule for the T1's private link, Omarchy's own PAM lines for sudo, polkit and the lock
+  screen with the password fallback kept, and the quirks with their fixes.
 
 Known gaps, ours and upstream's: system suspend and resume do not work with the T1 stack;
 the ambient light sensor is not available under t1bridge; the camera under t1bridge has not
@@ -172,6 +181,30 @@ state, ESP findings, the last diagnostic lines, package versions. It is the only
 you to paste. Never paste serial numbers, ECIDs, nonces, tickets, MAC addresses, restore logs
 from the private directory, or the contents of anything under `EFI/APPLE`.
 
+## Upstream status
+
+t1-revive builds three patched libimobiledevice components because upstream has no
+iBridge1,1 (Apple T1) restore support yet. The patches are exact diffs against pinned
+upstream commits and keep their upstream licences. They live as one commit each on a `t1`
+branch of the maintainer's copies, and `build.sh` can build from upstream plus patch or
+from those branches. When upstream merges them, the package moves its dependencies back
+to the original repositories and the copies go away.
+
+| Component | Upstream base | Patched copy | Upstream status |
+| --- | --- | --- | --- |
+| idevicerestore | `540c352` | [niconistal/idevicerestore-t1](https://github.com/niconistal/idevicerestore-t1) branch `t1` | offer to be filed (issue first, per their contributing guide) |
+| libirecovery | `95dec3a` | [niconistal/libirecovery-t1](https://github.com/niconistal/libirecovery-t1) branch `t1` | same |
+| usbmuxd | `3ded00c` | [niconistal/usbmuxd-t1](https://github.com/niconistal/usbmuxd-t1) branch `t1` | same |
+
+Related contributions to the projects around this tool:
+
+| Project | Change | Status |
+| --- | --- | --- |
+| omacom/omarchy-iso | preserve `EFI/APPLE` across the installer's disk wipe (the root fix for basecamp/omarchy#8271) | PR_OMARCHY_ISO |
+| basecamp/omarchy | lock screen keeps the fingerprint reader idle while the display is blanked | PR_OMARCHY_LOCK |
+| standardagents/t1bridge | bplist offset widths 1 to 8 bytes (the width the T1 writes) | [#16](https://github.com/standardagents/t1bridge/pull/16), merged, shipped in 0.1.6 |
+| standardagents/t1bridge | issues from this work | ISSUES_T1BRIDGE |
+
 ## Credits
 
 - Andrew Boyd, for [t1bridge](https://github.com/standardagents/t1bridge) and for saying
@@ -188,3 +221,12 @@ reports: [SECURITY.md](SECURITY.md). Changes: [CHANGELOG.md](CHANGELOG.md).
 MIT for everything authored in this repository. The patches and build recipes under
 `vendor/` apply to idevicerestore and libirecovery (LGPL-2.1) and usbmuxd (GPL) and stay under
 those licences; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Appendix: installing with no network
+
+The 2017 15-inch ships a Wi-Fi chip for which `linux-firmware` carries no calibration file,
+so a fresh install can come up showing no wireless networks at all, and the tool needs the
+network twice: for packages, then for Apple. If that is your situation, there is an install
+stick that carries the tool, the firmware bundle and the Wi-Fi fix on one extra partition
+next to a stock Omarchy ISO: [docs/install-stick.md](docs/install-stick.md). Everyone else
+should ignore it and use the AUR package or the source build above.

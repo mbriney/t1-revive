@@ -1,6 +1,6 @@
 # lib/cmd-handover.sh - cmd_handover: hand a T1 that is already booted
 # (05ac:8600) to t1bridge without a restart. Port of one-shot.sh step 5 and
-# omarchy-t1's handover_no_reboot (proven 2026-09-07: re-enumerating the USB
+# the no-reboot handover proven 2026-09-07 (re-enumerating the USB
 # device makes t1bridge's configuration selector pick configuration 2; udev
 # then starts the t1bridge stack on its own).
 #
@@ -31,8 +31,8 @@ cmd_handover() {
   if ! modinfo -n t1_cfgsel >/dev/null 2>&1 && ! command -v t1bridge >/dev/null 2>&1; then
     note "t1bridge is not installed on this machine, so nothing takes the T1 yet."
     note "The T1 keeps running the regenerated image; once the ESP is staged it boots from it on its own."
-    note "Next: install t1bridge (https://github.com/standardagents/t1bridge; on Omarchy: the omarchy-t1"
-    note "installer), then run: t1-revive handover   (or simply power cycle once)."
+    note "Next: install t1bridge (https://github.com/standardagents/t1bridge; on Omarchy see docs/omarchy.md),"
+    note "then run: t1-revive handover   (or simply power cycle once)."
     diag step=handover result=skipped reason=no-t1bridge
     return 0
   fi
@@ -69,7 +69,7 @@ cmd_handover() {
       note "(dry) wait up to 15 s for $sock, then: t1bridge status"
     fi
     note "If the Touch Bar is not drawn by t1bridge within ~10 s: full power cycle (the ESP is staged, it comes back)."
-    note "Touch ID needs t1bridge's import and enrolment (on Omarchy: the omarchy-t1 installer)."
+    note "Touch ID needs t1bridge's import and enrolment (see its README; on Omarchy also docs/omarchy.md)."
   else
     note "t1bridge's selector module is present but the t1bridge CLI is not; install the t1bridge packages, then check: t1bridge status"
   fi

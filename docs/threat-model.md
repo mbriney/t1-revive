@@ -89,7 +89,7 @@ files are as exposed on a stock macOS machine as they are here. The private dire
 the unredacted logs to that exposure, which is why it is 0700 and why the report bundle
 never includes it.
 
-## Why the tool refuses without a backup
+## Why an off-disk copy is still wise
 
 Every failure mode we know of ends in the same recovery mode a wiped machine already is in,
 and a preserved copy of `EFI/APPLE` turns even that into a copy back and a power cycle. The
@@ -97,10 +97,17 @@ one permanent scenario is external: Apple withdrawing the server-side signing th
 regeneration depends on. Apple does stop signing old firmware. From that day a wiped T1 with
 no backup is unrecoverable by anyone, macOS reinstall included.
 
-So `preflight` and `regenerate` refuse to continue until a backup off this disk has been
-confirmed. If any of `EFI/APPLE` still exists, `backup --to` copies it and checks that
-`FDRData` is inside. If the folder is gone, there is nothing to copy, and the first thing to
-do after regeneration is to copy the new folder off the disk, encrypted, and keep it.
+Everything short of that day is recoverable without a backup, so the backup is not a gate.
+`stage` records any existing `EMBEDDEDOS` files under `efi-backup-<stamp>/` in the state
+directory before it overwrites them, and regeneration produces the data again whenever it is
+needed. `regenerate` warns when no off-disk copy has been confirmed and asks you to confirm
+before it continues; it does not stop. What the warning is about is the one scenario above,
+which no on-disk copy survives, because the disk is what a reinstall erases.
+
+If any of `EFI/APPLE` still exists, `backup --to` copies it and checks that `FDRData` is
+inside. The destination only has to be somewhere other than this disk. If the folder is
+gone, there is nothing to copy, and the first thing to do after regeneration is to copy the
+new folder off the disk, encrypted, and keep it.
 
 ## Failure modes and what is permanent
 

@@ -3,7 +3,7 @@
 #
 #   t1-revive regenerate                 pass-a -> frst-a -> pass-b -> frst-b -> phase14 -> stage -> handover
 #   t1-revive regenerate --from STEP     resume at pass-a | frst-a | pass-b | frst-b | phase14 | stage | handover
-#   t1-revive regenerate --force         proceed without an ESP backup (warns); passed on to stage
+#   t1-revive regenerate --force         skip the confirmation about replacing existing EFI/APPLE data; passed on to stage
 #
 # Every step checks the T1's USB state before touching it and the chain stops
 # on the first failure with the fallback spelled out (full power cycle, then
@@ -87,18 +87,20 @@ cmd_regenerate() {
     note "t1bridge is installed; its modules get reloaded by the kernel when 8600 appears; phase 14 handles that"
   fi
 
-  # The backup rule: an existing EFI/APPLE/EMBEDDEDOS is never overwritten
-  # before `t1-revive backup` saved it.
+  # Existing EFI/APPLE/EMBEDDEDOS is replaced by the regenerated set. An off-disk backup is
+  # optional: the data can be regenerated again as long as Apple signs it, and cmd_stage keeps an
+  # on-disk copy of the old files under private/esp-backup-<stamp>/ before writing. We warn and
+  # ask once; --force or --no-confirm skips the question.
   read -r _ esp_mnt < <(esp_resolve)
   if [ -n "$esp_mnt" ] && [ -d "$esp_mnt/EFI/APPLE/EMBEDDEDOS" ]; then
     if [ -z "$(backup_latest)" ]; then
-      if [ "$force" = 1 ]; then
-        warn "the ESP already holds EFI/APPLE/EMBEDDEDOS and no backup exists; --force given, continuing"
-      else
-        die 4 "the ESP already holds EFI/APPLE/EMBEDDEDOS and no backup exists under $T1R_STATE. Run: t1-revive backup   first"
-      fi
+      warn "the ESP already holds EFI/APPLE/EMBEDDEDOS and no off-disk backup was made with: t1-revive backup --to PATH"
+      note "the old files are kept on this disk under $T1R_STATE/private/esp-backup-<stamp>/ when staging;"
+      note "an off-disk copy only matters if Apple ever stops signing this data (then it cannot be regenerated)."
+      diag step=gate backup=none existing_data=yes
+      [ "$force" = 1 ] || confirm "replace the existing Apple data with regenerated data"
     else
-      note "existing EFI/APPLE/EMBEDDEDOS on the ESP; a backup exists"
+      note "existing EFI/APPLE/EMBEDDEDOS on the ESP; an off-disk backup exists"
     fi
   else
     note "no EFI/APPLE/EMBEDDEDOS on the ESP"

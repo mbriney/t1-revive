@@ -1,7 +1,12 @@
 # The install stick: the offline path
 
-A fresh Linux install on one of these Macs can come up with no network, and the tool needs
-the network twice: for packages, then for Apple. The install stick solves that. It is the
+This page is for one case only: a fresh install that comes up with no network at all. On
+the 2017 15-inch that is common, because `linux-firmware` carries no calibration file for
+its Wi-Fi chip. If your machine has network after the install, ignore this page entirely and
+use the AUR package or the source build in the README.
+
+The tool needs the network twice: for packages, then for Apple. The install stick solves
+that. It is the
 stock Omarchy ISO with one extra partition, labelled `TOOLKIT`, that carries the tool, the
 patched restore binaries, Apple's public firmware bundle, and a Wi-Fi fixer. The ISO and its
 EFI partition are untouched; the installer stays stock.
@@ -72,11 +77,13 @@ Install the toolkit from the partition as its `README.txt` says, then:
 
 ```sh
 sudo t1-revive preflight
-sudo t1-revive backup --to /path/to/another/device
+sudo t1-revive backup --to PATH        # recommended if EFI/APPLE still exists
 sudo t1-revive regenerate
 ```
 
-followed by t1bridge (on Omarchy, `omarchy-t1`). If the stick's `README.txt` offers a single
+followed by t1bridge, installed from its own README; on Omarchy read
+[omarchy.md](omarchy.md) alongside it. The backup is recommended, not required: if you skip
+it, `regenerate` warns and asks you to confirm. If the stick's `README.txt` offers a single
 wrapper command that runs those in order, it does exactly that and stops at the first
 failing step with the step's name; the individual commands above are the same thing broken
 out.

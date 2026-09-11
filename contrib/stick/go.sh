@@ -65,9 +65,6 @@ if ! { sudo rm -rf "$DEST.new" \
        && sudo cp "$TMP/t1-revive-toolkit/MANIFEST.txt" "$DEST.new/MANIFEST.txt"; }; then
   stop "toolkit install" "could not copy the toolkit to $DEST"
 fi
-if [[ -d "$TMP/t1-revive-toolkit/omarchy-t1" ]]; then
-  sudo cp -a "$TMP/t1-revive-toolkit/omarchy-t1" "$DEST.new/omarchy-t1" || stop "toolkit install" "could not copy omarchy-t1 to $DEST"
-fi
 if ! { sudo chown -R root:root "$DEST.new" \
        && sudo rm -rf "$DEST.old" \
        && { [[ ! -e "$DEST" ]] || sudo mv "$DEST" "$DEST.old"; } \
@@ -124,26 +121,12 @@ else
   say "3/4  Regeneration not needed"
 fi
 
-say "4/4  Touch Bar and Touch ID"
-if [[ -f "$DEST/omarchy-t1/install.sh" ]]; then
-  bash "$DEST/omarchy-t1/install.sh" --no-reboot --quiet || stop "Touch ID setup" "see ~/.local/state/omarchy-t1/install.log; rerun: bash $DEST/omarchy-t1/install.sh"
-else
-  echo "  This toolkit was built without the omarchy-t1 plugin. Install t1bridge by hand:"
-  echo "    git clone https://github.com/standardagents/t1bridge && cd t1bridge"
-  echo "    follow its README (install, then enrol a finger); it takes over the booted T1 from here."
-  say "Regeneration done; Touch Bar/Touch ID stack left to you."
-  exit 0
-fi
+say "4/4  Touch Bar and Touch ID: t1bridge"
+echo "  The T1 is running its regenerated firmware and the ESP is staged. Touch Bar and Touch ID"
+echo "  come from t1bridge (Andrew Boyd), installed from its own signed packages:"
+echo "    https://github.com/standardagents/t1bridge     (README: install, import, enrol a finger)"
+echo "  On Omarchy also read $DEST/docs/omarchy.md (firewall rule, PAM lines, known quirks)."
+echo "  After installing t1bridge, hand it the booted T1 without a restart:  sudo t1-revive handover"
+say "Regeneration done."
+exit 0
 
-say "All done."
-echo "  Try it:   sudo -k; sudo true      (touch the sensor)"
-echo "  Lock:     Super+Ctrl+L, then touch"
-# This session's user manager started before t1bridge existed, so the enabled renderer unit is
-# refused at session-admission. install.sh bootstraps one renderer with the group via newgrp, in
-# its own scope, to cover this session; the user unit takes over from the next login. Touch ID is
-# unaffected either way -- PAM does not use the renderer socket.
-if systemctl --user is-active --quiet t1-touchbar-session.scope; then
-  echo "  Touch Bar: live now (bootstrapped for this session; the user unit takes over next login)"
-elif ! id -nG | grep -qw t1bridge; then
-  echo "  Touch Bar: log out and back in to light it up (this session predates the t1bridge group)"
-fi

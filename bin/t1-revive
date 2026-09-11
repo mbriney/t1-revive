@@ -28,7 +28,7 @@ usage: t1-revive [--no-confirm] [--demo] [--dry-run] [--state DIR] [--log DIR] [
 
 subcommands
   preflight [--local] [--install]   check the machine; nothing touches the T1 (exit 3 = fix the NO lines)
-  backup [--to DIR]                 save EFI/APPLE from the ESP (tar, root-only); --to copies it to a stick
+  backup [--to DIR]                 optional: save EFI/APPLE from the ESP (tar, root-only); --to copies it off this disk
   status                            one screen: model, T1, ESP, state, t1bridge
   regenerate [--from STEP]          pass-a -> frst -> pass-b -> frst -> phase14 -> stage -> handover
   stage [--dry-run]                 write the regenerated files to the ESP

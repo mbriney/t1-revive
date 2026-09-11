@@ -24,25 +24,41 @@ It then appears under /run/media/<your user>/TOOLKIT.
 
    It installs the toolkit to /usr/local/lib/t1-revive (t1-revive on the PATH via /usr/local/bin;
    --dest DIR to put it elsewhere), checks the machine (sudo t1-revive preflight --install),
-   regenerates the T1's firmware data from Apple (sudo t1-revive regenerate --demo; the firmware
-   package is downloaded from Apple's CDN and checksum-verified), then installs the Touch Bar +
-   Touch ID stack and enrols a finger. No reboot. Sudo asked once.
+   and regenerates the T1's firmware data from Apple (sudo t1-revive regenerate --demo; the
+   firmware package is downloaded from Apple's CDN and checksum-verified). It then points you
+   at t1bridge for the Touch Bar and Touch ID; it does not install t1bridge for you. No reboot.
+   Sudo asked once.
+
+   If EFI/APPLE still exists on this machine, copying it off the disk first is recommended:
+       sudo t1-revive backup --to PATH
+   Any destination that is not this disk works: another machine over scp, a phone, a cloud
+   folder. It is not required. Without it, regenerate warns and asks you to confirm.
 
    On a fresh install expect TWO runs: the first one syncs the package lists and does the full
    system update (the ISO's kernel is usually behind the repos, and every kernel module built in
    this run must match the running kernel), then stops with "reboot needed". Reboot, run the same
    command again, and it goes all the way. On an up-to-date machine the update is a no-op.
 
-   If it stops during step 3, the reason is on screen and in /var/log/t1-revive/latest.log
-   (redacted; safe to paste). Pass A's data survives, so after a full power cycle resume with:
-       sudo t1-revive regenerate --from pass-b
-   then step 4 by hand:  bash /usr/local/lib/t1-revive/omarchy-t1/install.sh --no-reboot
-   (or install t1bridge from https://github.com/standardagents/t1bridge if the toolkit was built
-   without the omarchy-t1 plugin).
+3. Touch Bar and Touch ID: install t1bridge from its own README.
 
-   The Touch Bar lights up during the run: the renderer needs the t1bridge group, which this
-   login session predates, so install.sh starts one with the group via newgrp in its own scope.
-   Your next login takes over with the normal user unit. Touch ID works either way.
+       https://github.com/standardagents/t1bridge
+
+   It ships signed packages for Arch and Omarchy, and its README covers install, import and
+   enrolling a finger. On Omarchy also read docs/omarchy.md in the installed toolkit
+   (/usr/local/lib/t1-revive/docs/omarchy.md): the ufw rule for the T1 link, the PAM lines for
+   sudo, polkit and the lock screen, and the known quirks with their fixes. Afterwards:
+
+       sudo t1-revive handover
+
+   hands the booted T1 to t1bridge with no restart. A full power cycle does the same.
+
+   If go.sh stops during the regeneration, the reason is on screen and in
+   /var/log/t1-revive/latest.log (redacted; safe to paste). Pass A's data survives, so after a
+   full power cycle resume with:
+       sudo t1-revive regenerate --from pass-b
+
+   The Touch Bar renderer needs the t1bridge group, which this login session predates, so the
+   bar may only light for you at the next login. Touch ID works either way.
 
    Something to report?  sudo t1-revive report   prints a redacted bundle to paste into an issue.
 

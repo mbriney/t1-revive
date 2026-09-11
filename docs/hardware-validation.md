@@ -23,9 +23,10 @@ a yes.
 - [ ] `lsusb` shows the T1 at `05ac:1281` (recovery), or at `05ac:8600` with no
       `EFI/APPLE/EMBEDDEDOS` on the ESP (a warm reboot after the wipe). Note which.
 - [ ] Any copy of `EFI/APPLE` from this Mac that exists anywhere has been located and kept.
-- [ ] `sudo t1-revive backup --to PATH` ran against a device that is not this disk, and
-      the tool confirmed either that `FDRData` is inside the copy or that there was nothing
-      to copy.
+- [ ] Recommended, not required: `sudo t1-revive backup --to PATH` ran against a
+      destination that is not this disk, and the tool confirmed either that `FDRData` is
+      inside the copy or that there was nothing to copy. Record it as skipped if you skipped
+      it; `regenerate` warns and asks for confirmation in that case, and continues.
 - [ ] The machine is on mains power. Sleep is off for the duration.
 - [ ] Password login works for `sudo`, and, if a lock screen is in use, for the lock screen.
       This must still be true at the end.
@@ -61,7 +62,8 @@ If the tool stops: record the step, the exit code, and the message. Power cycle.
       `version.plist` present and the T1 at `8600`.
 - [ ] Copy the new `EFI/APPLE` folder off this disk, encrypted. Note done.
 
-Then t1bridge, through omarchy-t1 on Omarchy or t1bridge's own README elsewhere:
+Then t1bridge, installed from its own README. On Omarchy read [omarchy.md](omarchy.md)
+first: the firewall rule, the PAM lines and the known quirks are there.
 
 - [ ] `sudo t1bridge status`: every row ready (`keybag: not-enrolled` is normal before the
       first enrollment).
@@ -107,7 +109,7 @@ in it, that is a bug; report it privately per [../SECURITY.md](../SECURITY.md).
 | t1-revive version | |
 | t1bridge version | |
 | Starting state | `1281`, or `8600` without the folder |
-| Backup off-disk | `FDRData` inside / nothing to copy |
+| Backup off-disk | `FDRData` inside / nothing to copy / skipped |
 | Preflight | clean / reboot needed once / NO lines (which) |
 | pass A / FRST / pass B / FRST / phase 14 / stage / handover | ok or stopped at, with exit code |
 | Resumes needed | step and count |

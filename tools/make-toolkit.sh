@@ -1,33 +1,29 @@
 #!/usr/bin/env bash
 # tools/make-toolkit.sh - pack what a fresh machine needs to run t1-revive offline from a USB stick.
 #
-#   bash tools/make-toolkit.sh [--out DIR|FILE.tar.zst] [--with-omarchy-t1 DIR]
+#   bash tools/make-toolkit.sh [--out DIR|FILE.tar.zst]
 #
 # Allowlist only: bin/ lib/ tools/ contrib/ docs/ skills/ VERSION LICENSE README.md AGENTS.md
-# THIRD_PARTY_NOTICES.md, the built prefix/ (patched libimobiledevice stack) if present, and
-# optionally a checkout of the omarchy-t1 plugin.
+# THIRD_PARTY_NOTICES.md, and the built prefix/ (patched libimobiledevice stack) if present.
 # Never: logs, post/, test/, vendor sources, Apple firmware, device data.
 # Output: t1-revive-toolkit-<date>.tar.zst plus a .sha256 sidecar, next to the repository unless --out.
-# The tarball unpacks to t1-revive-toolkit/{t1-revive/,omarchy-t1/,MANIFEST.txt}; contrib/stick/go.sh
+# The tarball unpacks to t1-revive-toolkit/{t1-revive/,MANIFEST.txt}; contrib/stick/go.sh
 # installs it. No network is used.
 set -euo pipefail
 
 ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
-OUT=""; OMARCHY_T1=""
+OUT=""
 usage() { awk 'NR>1 { if ($0 !~ /^#/) exit; sub(/^# ?/, ""); print }' "$0"; exit "${1:-2}"; }
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --out) OUT=${2:?--out needs a path}; shift 2;;
     --out=*) OUT=${1#--out=}; shift;;
-    --with-omarchy-t1) OMARCHY_T1=${2:?--with-omarchy-t1 needs a directory}; shift 2;;
-    --with-omarchy-t1=*) OMARCHY_T1=${1#--with-omarchy-t1=}; shift;;
     -h|--help) usage 0;;
     *) echo "unknown argument: $1" >&2; usage;;
   esac
 done
 for t in tar zstd sha256sum; do command -v "$t" >/dev/null || { echo "missing tool: $t" >&2; exit 1; }; done
 [[ -f "$ROOT/VERSION" ]] && [[ -d "$ROOT/lib" ]] || { echo "not a t1-revive checkout: $ROOT" >&2; exit 1; }
-[[ -z "$OMARCHY_T1" ]] || [[ -f "$OMARCHY_T1/install.sh" ]] || { echo "--with-omarchy-t1: no install.sh in $OMARCHY_T1" >&2; exit 1; }
 
 STAMP=$(date +%Y%m%d)
 case "$OUT" in
@@ -55,11 +51,6 @@ if [[ -d "$ROOT/prefix/bin" ]]; then
 else
   HAVE_PREFIX=no
 fi
-# 3. optionally, the omarchy-t1 plugin (Touch Bar + Touch ID stack)
-if [[ -n "$OMARCHY_T1" ]]; then
-  mkdir -p "$T/omarchy-t1"
-  (cd -- "$OMARCHY_T1" && tar --exclude=.git --exclude=__pycache__ --exclude='*.log' -cf - .) | tar -C "$T/omarchy-t1" -xf -
-fi
 find "$T" -type f -name '*.sh' -exec chmod 0755 {} +
 [[ -f "$R/bin/t1-revive" ]] && chmod 0755 "$R/bin/t1-revive"
 
@@ -76,18 +67,13 @@ if [[ -f "$R/tools/scan-identifiers.sh" ]]; then
   # checkout if $TMPDIR happens to live inside one. Exceptions belong in the allowlist, not here.
   GIT_CEILING_DIRECTORIES=$STAGE bash "$R/tools/scan-identifiers.sh" "$R" \
     || { echo "REFUSING: tools/scan-identifiers.sh found identifiers in the staged toolkit (hits above)"; exit 1; }
-  # Rule 1 (the forbidden ACPI reset method) also applies to anything else the toolkit carries.
-  if [[ -d "$T/omarchy-t1" ]]; then
-    GIT_CEILING_DIRECTORIES=$STAGE bash "$R/tools/scan-identifiers.sh" --banned-only "$T/omarchy-t1" \
-      || { echo "REFUSING: the bundled omarchy-t1 checkout names the forbidden ACPI reset method (hits above)"; exit 1; }
-  fi
 fi
 
 # 5. manifest
 {
   echo "t1-revive toolkit, built $(date -u +%Y-%m-%dT%H:%M:%SZ), tool version $(tr -d '[:space:]' < "$ROOT/VERSION")"
   echo "Layout: t1-revive/ (the tool; install with contrib/stick/go.sh or copy to /usr/local/lib/t1-revive),"
-  echo "        prefix built binaries: $HAVE_PREFIX, omarchy-t1 plugin: $([[ -n "$OMARCHY_T1" ]] && echo yes || echo no)"
+  echo "        prefix built binaries: $HAVE_PREFIX"
   echo "Contains NO Apple firmware (downloaded from Apple at run time and checksum-verified) and"
   echo "NO data from any specific Mac: no EFI/APPLE folder, no FDRData, no tickets, no memboot, no logs."
   echo; echo "sha256 of every file (this manifest excepted; verify it with the .sha256 of the tarball):"
