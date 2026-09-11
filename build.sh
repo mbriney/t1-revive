@@ -237,6 +237,17 @@ build_component() {
 	mapfile -t opts < <(configure_opts "$name")
 	: >"$log"
 	cd -- "$dir" || die "cannot enter $dir"
+	# A Makefile configured for another prefix (a previous checkout, a moved tree) must not be
+	# reused: make install would silently target the old location and prefix/ would stay empty.
+	if [ -f Makefile ]; then
+		local configured
+		configured=$(sed -n 's/^prefix = //p' Makefile | head -n 1)
+		if [ "$configured" != "$PREFIX" ]; then
+			note "configure: Makefile targets '${configured:-?}', not $PREFIX - reconfiguring"
+			make distclean >>"$log" 2>&1 || true
+			rm -f Makefile
+		fi
+	fi
 	if [ ! -f Makefile ]; then
 		note "configure: ./autogen.sh --prefix=$PREFIX ${opts[*]}"
 		# RELEASE_VERSION feeds git-version-gen so --version matches the proven binaries
