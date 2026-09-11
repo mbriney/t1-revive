@@ -71,7 +71,9 @@ cmd_status() {
 
   out=
   [[ -r "$T1R_LOG/diagnostics.log" ]] && out=$(tail -1 "$T1R_LOG/diagnostics.log" 2>/dev/null)
-  [[ -z "$out" ]] && command -v journalctl >/dev/null 2>&1 && out=$(journalctl -q -t t1-revive -n 1 -o cat 2>/dev/null)
+  # component=test lines are the bats suite's (older builds wrote them to the journal): not this machine's history
+  [[ -z "$out" ]] && command -v journalctl >/dev/null 2>&1 && \
+    out=$(journalctl -q -t t1-revive -o cat 2>/dev/null | grep -v ' component=test ' | tail -n 1)
   _st "last diag" "${out:-none}"
   if [[ -L "$T1R_LOG/latest.log" ]]; then _st "last log" "$(readlink "$T1R_LOG/latest.log")"; fi
   return 0

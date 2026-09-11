@@ -25,6 +25,7 @@ t1r_env() {
   export T1R_LOGFILE=$T1R_LOG/test.log
   : >"$T1R_LOGFILE"
   export T1R_NO_CONFIRM=1 T1R_DEMO=0 T1R_DRY_RUN=1 T1R_COMPONENT=test T1R_COLOR=0
+  export T1R_NO_JOURNAL=1   # fixture runs must never land in the real journal
   unset T1R_LSBLK_JSON
   t1r_use_sysfs none
   t1r_use_dmi 14_3

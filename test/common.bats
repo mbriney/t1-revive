@@ -139,6 +139,25 @@ setup() { t1r_env; }
   assert_contains "$line" "elapsed=97"
 }
 
+@test "diag: under the test environment nothing is sent to the journal (T1R_NO_JOURNAL=1)" {
+  t1r_load; t1r_need diag
+  mkdir -p "$T1R_TMP/stub"
+  printf '#!/bin/sh\necho "$*" >>"%s"\n' "$T1R_TMP/logger.calls" >"$T1R_TMP/stub/logger"
+  chmod +x "$T1R_TMP/stub/logger"
+  PATH=$T1R_TMP/stub:$PATH diag step=journal-guard result=ok
+  [[ ! -e "$T1R_TMP/logger.calls" ]] || { cat "$T1R_TMP/logger.calls" >&2; return 1; }
+  grep -q 'step=journal-guard' "$T1R_LOGFILE"
+}
+
+@test "diag: with T1R_NO_JOURNAL=0 the line goes to logger -t t1-revive" {
+  t1r_load; t1r_need diag
+  mkdir -p "$T1R_TMP/stub"
+  printf '#!/bin/sh\necho "$*" >>"%s"\n' "$T1R_TMP/logger.calls" >"$T1R_TMP/stub/logger"
+  chmod +x "$T1R_TMP/stub/logger"
+  T1R_NO_JOURNAL=0 PATH=$T1R_TMP/stub:$PATH diag step=journal-on result=ok
+  grep -q -- '-t t1-revive -- t1-revive-diagnostic v=1 component=test step=journal-on result=ok' "$T1R_TMP/logger.calls"
+}
+
 @test "diag: a value with a space never reaches the log verbatim" {
   t1r_load; t1r_need diag
   run diag step="a b" result=ok

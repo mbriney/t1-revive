@@ -42,6 +42,7 @@ fi
 : "${T1R_COMPONENT:=t1-revive}"
 : "${T1R_LOGFILE:=}"
 : "${T1R_SCREEN_FD:=}"     # set by open_log: fd that still reaches the terminal
+: "${T1R_NO_JOURNAL:=0}"   # 1: diag lines stay in the log files and never reach the journal (test suite)
 : "${T1R_COLOR:=}"         # 1 when the terminal takes colours (decided in open_log / on demand)
 export T1R_ROOT T1R_PREFIX T1R_STATE T1R_LOG T1R_CACHE T1R_CONF T1R_SYSFS T1R_DMI T1R_ACPI_TABLES
 export T1R_NO_CONFIRM T1R_DEMO T1R_DRY_RUN T1R_COMPONENT
@@ -120,7 +121,9 @@ redact() {
 
 # ----- diagnostics ---------------------------------------------------------------------
 # diag K=V ... : one structured, identifier-free line to the command log, to $T1R_LOG/diagnostics.log
-# and to the journal. Values are clamped to [A-Za-z0-9._:-].
+# and to the journal (unless T1R_NO_JOURNAL=1: the test suite must never leave fixture runs in the
+# real journal, where `report` and `status` would later present them as the machine's history).
+# Values are clamped to [A-Za-z0-9._:-].
 diag() {
   local kv line="t1-revive-diagnostic v=1 component=$T1R_COMPONENT" k v
   for kv in "$@"; do
@@ -131,7 +134,9 @@ diag() {
   done
   if [[ -n "$T1R_LOGFILE" ]] && [[ -w "$T1R_LOGFILE" ]]; then printf '%s\n' "$line" >>"$T1R_LOGFILE"; fi
   if [[ -d "$T1R_LOG" ]] && [[ -w "$T1R_LOG" ]]; then printf '%s\n' "$line" >>"$T1R_LOG/diagnostics.log" 2>/dev/null; fi
-  command -v logger >/dev/null 2>&1 && logger -t t1-revive -- "$line" 2>/dev/null
+  if [[ "$T1R_NO_JOURNAL" != 1 ]] && command -v logger >/dev/null 2>&1; then
+    logger -t t1-revive -- "$line" 2>/dev/null
+  fi
   return 0
 }
 

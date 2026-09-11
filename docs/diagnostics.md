@@ -24,7 +24,9 @@ Rules of the format:
 - `component` is always present and names the command that emitted the line.
 - Every line is appended to the redacted log for the current command under the log
   directory (`/var/log/t1-revive`, root only) and sent to the journal with the tag
-  `t1-revive`, so `journalctl -t t1-revive` finds it.
+  `t1-revive`, so `journalctl -t t1-revive` finds it. `T1R_NO_JOURNAL=1` keeps lines out of
+  the journal; the test suite sets it. `component=test` lines are the suite's and are
+  ignored by `report` and `status`.
 
 ### Keys
 

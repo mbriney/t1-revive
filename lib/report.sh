@@ -283,10 +283,10 @@ report_diag_from_journal() {
   fi
   if [ -n "$since" ]; then
     out=$(journalctl -t t1-revive -o cat --no-pager --since "-${since}min" 2>/dev/null \
-          | grep '^t1-revive-diagnostic v=1 ' | tail -n 200)
+          | grep '^t1-revive-diagnostic v=1 ' | grep -v ' component=test ' | tail -n 200)
   else
     out=$(journalctl -t t1-revive -o cat --no-pager 2>/dev/null \
-          | grep '^t1-revive-diagnostic v=1 ' | tail -n 200)
+          | grep '^t1-revive-diagnostic v=1 ' | grep -v ' component=test ' | tail -n 200)
   fi
   if [ -z "$out" ]; then
     if report_is_root; then report_kv diag-journal 0; else report_kv diag-journal 0-or-needs-root; fi
