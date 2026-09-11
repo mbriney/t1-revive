@@ -113,7 +113,8 @@ cmd_preflight() {
     else pf_no "$b missing: build the patched stack (build.sh) or install the package"; fi
   done
   if [[ -x "$T1R_PREFIX/bin/idevicerestore" ]]; then
-    if strings "$T1R_PREFIX/bin/idevicerestore" 2>/dev/null | grep -q 'T1: EmbeddedOS restore options applied'; then pf_ok "idevicerestore carries the T1 patches"
+    # grep the file directly: `strings | grep -q` dies of SIGPIPE under pipefail on a real-size binary
+    if grep -qaF 'T1: EmbeddedOS restore options applied' "$T1R_PREFIX/bin/idevicerestore" 2>/dev/null; then pf_ok "idevicerestore carries the T1 patches"
     else pf_no "idevicerestore is not the patched build (no T1 marker string)"; fi
   fi
 

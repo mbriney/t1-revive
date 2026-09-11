@@ -343,6 +343,6 @@ check_idevicerestore() {
   local marker=$1 n
   [ -x "$T1R_IDR" ] || die 3 "idevicerestore not built at $T1R_IDR"
   LD_LIBRARY_PATH="$T1R_LIBS" "$T1R_IDR" --version >/dev/null 2>&1 || die 3 "idevicerestore will not run"
-  n=$(strings "$T1R_IDR" | grep -c "$marker" || true)
+  n=$(grep -aFc -- "$marker" "$T1R_IDR" 2>/dev/null || true)
   [ "${n:-0}" -ge 1 ] || die 3 "binary does not contain the T1 implementation ($marker)"
 }

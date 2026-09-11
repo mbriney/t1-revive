@@ -78,6 +78,18 @@ pf_load() {
   assert_contains "$output" "idevicerestore carries the T1 patches"
 }
 
+@test "preflight --local: the T1 marker is found in a real-size binary under pipefail (no SIGPIPE)" {
+  pf_load
+  # marker first, then ~3 MB of printable padding: `strings | grep -q` exits on the marker while
+  # strings is still writing, and under pipefail (bin/t1-revive sets it) the pipeline returned 141.
+  { printf '#!/usr/bin/env bash\n# T1: EmbeddedOS restore options applied\nexit 0\n'
+    head -c 3000000 /dev/zero | tr '\0' 'A' | fold -w 200 | sed 's/^/# /'; } >"$T1R_PREFIX/bin/idevicerestore"
+  set -o pipefail
+  run cmd_preflight --local
+  set +o pipefail
+  assert_contains "$output" "idevicerestore carries the T1 patches"
+}
+
 @test "preflight --local: an empty prefix is reported as missing binaries" {
   rm -rf "${T1R_PREFIX:?}/bin" "${T1R_PREFIX:?}/sbin"
   pf_load
