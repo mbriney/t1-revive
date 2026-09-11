@@ -120,6 +120,8 @@ package() {
 	find "$_root" \( -name '__pycache__' -o -name '*.pyc' -o -name '*.log' \) -prune -exec rm -rf -- {} +
 	install -d "$pkgdir/usr/bin"
 	ln -s "/usr/lib/$pkgname/bin/t1-revive" "$pkgdir/usr/bin/t1-revive"
+	# the (all-commented) settings file the backup=() entry refers to
+	install -Dm644 contrib/t1-revive.conf.example "$pkgdir/etc/$pkgname/t1-revive.conf"
 
 	# 2. the patched libimobiledevice stack, in its own prefix
 	cp -a -- "$srcdir/prefix" "$_root/prefix"

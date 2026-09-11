@@ -134,3 +134,16 @@ There is no Debian or Fedora packaging yet. The shape is the same: build `build.
 `/usr/lib/t1-revive/prefix`, install the tree under `/usr/lib/t1-revive`, symlink
 `/usr/bin/t1-revive`, and ship `vendor/patches/` plus the `SOURCES` statement to satisfy the
 LGPL/GPL source-availability requirement (see `vendor/README.md`).
+
+## Trial build (2026-09-11)
+
+`makepkg -fd` from `packaging/arch/` inside the checkout, with the release tarball provided
+locally (`git archive --prefix=t1-revive-0.1.0-dev/ -o $SRCDEST/t1-revive-0.1.0-dev.tar.gz HEAD`,
+which makepkg picks up instead of downloading the not-yet-existing tag) and `patchelf` on PATH
+from a Python venv (`pip install patchelf`), produced `t1-revive-0.1.0.dev-1-x86_64.pkg.tar.zst`
+(0.9 MB) plus a debug package. Verified: `/usr/bin/t1-revive` symlink, `prefix/bin/idevicerestore`
+and `prefix/sbin/usbmuxd` present, `RUNPATH` rewritten to `/usr/lib/t1-revive/prefix/lib`, no
+build-tree path left in any installed file, `SOURCES` and `refs.env` under the licences
+directory. The eight upstream tarball checksums verified. The package has not been installed
+(that needs root) and the `t1-revive.conf` sample was added after this trial.
+

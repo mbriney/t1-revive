@@ -1,0 +1,21 @@
+# /etc/t1-revive/t1-revive.conf - optional settings for t1-revive (key=value, shell syntax).
+# Command-line flags and environment variables win over this file. Every key is optional.
+
+# Pin the EFI System Partition when two candidates look alike (device path).
+#T1R_ESP_DEV=/dev/nvme0n1p1
+
+# Pin the T1 reset method when the ACPI tables define several FRST methods. It must be one of
+# the methods the tables actually define; the tool never guesses.
+#T1R_FRST_METHOD=\_SB.PCI0.XHC1.RHUB.ASOC.FRST
+
+# Use a local copy of Apple's EmbeddedOSFirmware.pkg instead of downloading it. The pinned
+# checksum is still enforced.
+#T1R_FIRMWARE=/path/to/EmbeddedOSFirmware.pkg
+
+# Stricter step gates: the restore tool's exit status and the full 30 s boot verdict are fatal.
+#T1R_STRICT=1
+
+# Directories (defaults shown).
+#T1R_STATE=/var/lib/t1-revive
+#T1R_LOG=/var/log/t1-revive
+#T1R_CACHE=/var/cache/t1-revive
