@@ -98,7 +98,11 @@ image, set the boot arguments to `rd=md0`, then issue the blind memboot command.
 
 The dispatch exit code proves only that the transaction was sent. Success is defined on the
 bus: the tool watches USB for 30 s and passes when `05ac:8600` appears, stays, and never
-falls back to `05ac:1281`. Measured: `8600` at 7 to 8 s, stable through the window. The tool
+falls back to `05ac:1281`. Measured: `8600` at 7 to 8 s, stable through the window. By default the
+gate after the watch is the one the proven run used: the T1 answers as `05ac:8600` within 5 s.
+With `--strict` the full verdict is required (at least 60 of 120 samples at `8600`, none at `1281`,
+`8600` last). Likewise pass A and pass B gate on their artefacts by default and on
+idevicerestore's exit status only with `--strict`. The tool
 then selects USB configuration 1 host-side so the firmware personality enumerates fully: two
 UVC interfaces (the camera), two HID interfaces, and the virtual Touch Bar and sensor
 devices. On a machine with no bar driver the Touch Bar stays dark at this point by design;

@@ -37,6 +37,7 @@ fi
 : "${T1R_NO_CONFIRM:=0}"
 : "${T1R_DEMO:=0}"
 : "${T1R_DRY_RUN:=0}"
+: "${T1R_STRICT:=0}"
 : "${T1R_COMPONENT:=t1-revive}"
 : "${T1R_LOGFILE:=}"
 : "${T1R_SCREEN_FD:=}"     # set by open_log: fd that still reaches the terminal

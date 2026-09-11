@@ -24,7 +24,7 @@ export T1R_ROOT
 
 usage() {
   cat <<'EOF'
-usage: t1-revive [--no-confirm] [--demo] [--dry-run] [--state DIR] [--log DIR] [--firmware FILE] SUBCOMMAND [ARGS]
+usage: t1-revive [--no-confirm] [--demo] [--dry-run] [--state DIR] [--log DIR] [--firmware FILE] [--strict] SUBCOMMAND [ARGS]
 
 subcommands
   preflight [--local] [--install]   check the machine; nothing touches the T1 (exit 3 = fix the NO lines)
@@ -44,6 +44,9 @@ global flags (before the subcommand)
   --state DIR    private state directory (default /var/lib/t1-revive)  (T1R_STATE)
   --log DIR      log directory (default /var/log/t1-revive)            (T1R_LOG)
   --firmware FILE  use this EmbeddedOSFirmware.pkg instead of downloading it (T1R_FIRMWARE)
+  --strict       stricter step gates than the proven run: pass A/B must also exit 0, phase 14 must
+                 hold 05ac:8600 for the whole 30 s watch. Default gates are the ones that ran on
+                 the tested machine: the artefacts exist, the T1 is at 8600 after the watch (T1R_STRICT=1)
 
 exit codes: 0 ok, 1 failure, 2 usage, 3 preflight failed, 4 refused for safety,
             5 device in an unexpected state, 6 network/Apple failure, 7 reboot needed
@@ -61,6 +64,7 @@ while [[ $# -gt 0 ]]; do
     --log=*) export T1R_LOG=${1#--log=};;
     --firmware) [[ $# -ge 2 ]] || { usage >&2; exit 2; }; export T1R_FIRMWARE=$2; shift;;
     --firmware=*) export T1R_FIRMWARE=${1#--firmware=};;
+    --strict) export T1R_STRICT=1;;
     -h|--help|help) usage; exit 0;;
     -V|--version|version) break;;
     --) shift; break;;

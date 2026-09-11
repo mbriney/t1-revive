@@ -102,5 +102,15 @@ step_pass_b() {
   stop_usbmuxd
   note "pass B finished. NOTHING has been written to the ESP."
   sleep 0.5
-  [ "$rc" = 0 ]
+  # Gate as the proven run did: image and ticket exist. Exit status and the replayed-store check
+  # are fatal only with --strict.
+  if is_dry; then note "(dry) artefact gate skipped (no restore ran)"; return 0; fi
+  diag step=pass-b restore_rc="$rc" artefacts_ok="$ok"
+  [ -s "$priv/combined.preflight.memboot" ] && [ -s "$priv/preflight.apticket" ] \
+    || { warn "pass B finished but image/ticket missing"; return 1; }
+  if [ "$rc" != 0 ] || [ "$ok" != 1 ]; then
+    if [ "${T1R_STRICT:-0}" = 1 ]; then warn "pass B incomplete (rc=$rc, artefacts=$ok); --strict: stopping"; return 1; fi
+    warn "pass B: idevicerestore exited $rc, artefacts complete=$ok; image and ticket are present so continuing as the proven run did (use --strict to stop here)"
+  fi
+  return 0
 }

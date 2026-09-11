@@ -84,5 +84,14 @@ step_pass_a() {
   stop_usbmuxd
   note "pass A finished. NOTHING has been written to the ESP."
   sleep 0.5
-  [ "$rc" = 0 ]
+  # Gate as the proven run did: the store exists. idevicerestore's exit status is recorded in the
+  # log and diag; it is fatal only with --strict (the original always exited 0 here).
+  if is_dry; then note "(dry) artefact gate skipped (no restore ran)"; return 0; fi
+  diag step=pass-a restore_rc="$rc"
+  [ -s "$priv/FDRData" ] || { warn "pass A finished but no FDRData"; return 1; }
+  if [ "$rc" != 0 ]; then
+    if [ "${T1R_STRICT:-0}" = 1 ]; then warn "idevicerestore exited $rc (--strict: treating as failure)"; return 1; fi
+    warn "idevicerestore exited $rc but FDRData was written; continuing as the proven run did (use --strict to stop here)"
+  fi
+  return 0
 }

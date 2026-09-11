@@ -164,7 +164,21 @@ step_phase14() {
     sleep 0.5
     return 0
   fi
-  note "PHASE 14: NOT stable (see samples above). Do not stage anything on the ESP."
+  note "PHASE 14: NOT stable by the strict verdict (see samples above)."
+  diag step=phase14 verdict=not-stable s8600="$s8600" s1281="$s1281" last="${last:-none}"
+  if [ "${T1R_STRICT:-0}" = 1 ]; then
+    note "--strict: do not stage anything on the ESP."
+    sleep 0.5
+    return 1
+  fi
+  # The proven run gated on one thing after the watch: the T1 is at 05ac:8600 within 5 s.
+  if wait_t1 booted 5; then
+    warn "T1 is at 05ac:8600 after the watch; continuing as the proven run did (use --strict to require the full 30 s verdict)"
+    note "Look at the Touch Bar now. NOTHING has been written to the ESP yet."
+    sleep 0.5
+    return 0
+  fi
+  note "T1 is not at 05ac:8600 after the watch. Do not stage anything on the ESP."
   sleep 0.5
   return 1
 }

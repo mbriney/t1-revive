@@ -10,6 +10,8 @@ Initial public version, derived from the private notebook scripts (`one-shot.sh`
 `pass-a.sh`, `pass-b.sh`, `phase14.sh`, `stage-esp.sh`, `frst-test.sh`, `regen-preflight.sh`,
 the toolkit and install-stick builders) with a clean history:
 
+- step gates match the proven run by default (artefacts present; `8600` after the phase-14 watch);
+  `--strict` adds idevicerestore exit-status and full 30 s stability requirements
 - one entry point `t1-revive` with `preflight`, `backup`, `regenerate [--from STEP]`,
   `stage`, `handover`, `status`, `report`, `version`, and the global `--no-confirm`,
   `--demo`, `--dry-run`;
