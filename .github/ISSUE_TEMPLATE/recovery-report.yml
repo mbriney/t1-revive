@@ -1,0 +1,104 @@
+name: Recovery report
+description: You ran t1-revive (preflight, backup, regenerate, stage or handover). Report the outcome, good or bad.
+title: "[MacBookProXX,Y] <t1-state>: <one line>"
+labels: ["recovery-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you. One report from a machine that is not the maintainer's is worth more than
+        anything else this project can get.
+
+        **Never paste:** serial numbers, ECIDs, nonces, tickets, the contents of any file under
+        `EFI/APPLE`, `/var/lib/t1-revive` or `/var/lib/t1bridge`, keybags, calibration, biometric
+        state, full journals, `dmesg`, `lsusb -v`, hostnames, usernames, home paths, IP or MAC
+        addresses, or screenshots showing any of these. The `t1-revive report` bundle and
+        `t1-revive-diagnostic` lines are safe by design; everything else is not.
+  - type: dropdown
+    id: model
+    attributes:
+      label: Model
+      description: "`cat /sys/class/dmi/id/product_name`"
+      options:
+        - MacBookPro13,2 (2016 13-inch)
+        - MacBookPro13,3 (2016 15-inch)
+        - MacBookPro14,2 (2017 13-inch)
+        - MacBookPro14,3 (2017 15-inch)
+        - other (say which in "what you tried")
+    validations:
+      required: true
+  - type: input
+    id: distro
+    attributes:
+      label: Distro and version
+      placeholder: "Omarchy 4.0.2 / Arch (2026-09) / other"
+    validations:
+      required: true
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: Outcome
+      options:
+        - Regenerated, staged, Touch Bar lit after a full power cycle (persistent)
+        - Regenerated and staged, but a cold boot came back in recovery (not persistent)
+        - Regenerated, handover to t1bridge failed
+        - Stopped at preflight (exit 3)
+        - Stopped at backup
+        - Failed at pass-a
+        - Failed at frst
+        - Failed at pass-b
+        - Failed at phase14
+        - Failed at stage
+        - Refused for safety (exit 4)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: stopped
+    attributes:
+      label: The STOPPED line and exit code, if any
+      placeholder: "STOPPED: phase 14 did not reach a stable booted state (exit 5)"
+  - type: textarea
+    id: bundle
+    attributes:
+      label: t1-revive report bundle
+      description: "`sudo t1-revive report --out t1-revive-report.txt`, read it, paste the whole file including the `report-sha256` line."
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you tried
+      description: The commands you typed, in order, and what you saw. Power cycles count as steps.
+      placeholder: |
+        1. sudo t1-revive preflight -> all OK
+        2. sudo t1-revive backup -> ok
+        3. sudo t1-revive regenerate -> STOPPED at phase14 after ~8 s
+        4. full power cycle, sudo t1-revive regenerate --from pass-b -> same
+    validations:
+      required: true
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Was this report assembled with the tester skill (your own agent)?
+      options:
+        - "yes"
+        - "no"
+        - partly
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I read the bundle and this issue contains no serial numbers, ECIDs, nonces, tickets, file contents from EFI/APPLE, keybags, hostnames, usernames, paths, or addresses.
+          required: true
+        - label: A backup was taken (or the tool confirmed there was nothing to back up) before any device-touching step.
+          required: false
+  - type: dropdown
+    id: credit
+    attributes:
+      label: If this confirms a model, may we list your GitHub handle in the README table?
+      options:
+        - "yes"
+        - "no"

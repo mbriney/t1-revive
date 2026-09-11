@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and general discussion
+    url: https://github.com/niconistal/t1-revive/discussions
+    about: Not a report? Ask here. Same rule applies, never paste serials, ECIDs, tickets, or EFI/APPLE contents.
+  - name: Touch Bar or Touch ID problems after a successful regeneration
+    url: https://github.com/standardagents/t1bridge/issues
+    about: Once the T1 is booted and staged, the driver stack is t1bridge. Report there with t1bridge-diagnostic lines.
+  - name: Omarchy installer (omarchy-t1) problems
+    url: https://github.com/niconistal/omarchy-t1/issues
+    about: Stage 1 / stage 2 installer failures on Omarchy with an intact EFI/APPLE folder.
