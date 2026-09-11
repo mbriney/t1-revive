@@ -1,0 +1,15 @@
+prefix/
+vendor/src/
+vendor/build/
+*.log
+*.pkg
+*.dmg
+*.im4p
+*.im4m
+*.shsh*
+*.memboot
+FDRData*
+__pycache__/
+*.pyc
+test/tmp/
+.bats-tmp/
