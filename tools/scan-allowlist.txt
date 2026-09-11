@@ -1,0 +1,16 @@
+# t1-revive identifier-scan exceptions
+# Format: path-glob<TAB>line-regex<TAB>reason   (bash glob against the repo-relative path; * matches /)
+# A hit is ignored when both the path and the whole line match. The banned-method rule never consults this file.
+vendor/refs.env	^[A-Z0-9_]+="?[0-9a-f]{40,64}"?([ \t]*#.*)?$	pinned upstream git commits and tarball sha256
+*.sha256	^[0-9a-f]{64}[ \t]	sha256sum output files
+vendor/SOURCES*	(^|[ \t])[0-9a-f]{40}([ \t]|$)|[0-9a-f]{64}	pinned source commits and checksums
+packaging/arch/PKGBUILD	^ *(sha256sums|sha512sums|b2sums)=\('?[0-9a-f]{64,128}'?|^ *'[0-9a-f]{64,128}'\)?$	makepkg checksum arrays
+packaging/arch/.SRCINFO	^[ \t]*(sha256sums|sha512sums|b2sums) = [0-9a-f]+$	makepkg .SRCINFO checksums
+lib/firmware.sh	^[ \t]*(readonly |declare -r |local )?[A-Z0-9_]*SHA256[A-Z0-9_]*=["']?[0-9a-f]{64}	pinned checksum of Apple EmbeddedOSFirmware.pkg
+vendor/patches/*.patch	^(Base commit:[ \t]+|From |index )[0-9a-f]{7,40}	git patch headers carry upstream commit ids
+contrib/stick/brcmfmac43602-pcie.txt	^macaddr=(00:){5}00$	the all-zero placeholder MAC in the Broadcom NVRAM template; the installer writes the real one on the machine
+*	(^|[^0-9a-f])0c97ab746ec635b34b1bdea4e4722cd0173443e2ba6ede54cc6af3b5e220d230([^0-9a-f]|$)	the one pinned sha256 of Apple's EmbeddedOSFirmware.pkg: a public package checksum, not an identifier, and docs/CHANGELOG/handoffs quote it. Only this exact literal is exempt
+tools/firmware-manifest.sha256	^[0-9a-f]{64} [0-9]+ 	sha256+size manifest of the firmware bundle contents
+THIRD_PARTY_NOTICES.md	gist\.github\.com/[A-Za-z0-9_.-]+/[0-9a-f]{32}	credit link: a github gist id is 32 hex characters
+vendor/README.md	gist\.github\.com/[A-Za-z0-9_.-]+/[0-9a-f]{32}	credit link: a github gist id is 32 hex characters
+.github/workflows/ci.yml	^ *SHELLCHECK_SHA512: [0-9a-f]{128}$	pinned checksum of the shellcheck release tarball CI downloads (verified 2026-09-10)

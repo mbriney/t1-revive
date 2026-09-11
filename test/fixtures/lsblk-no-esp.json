@@ -1,0 +1,10 @@
+{
+   "blockdevices": [
+      {"name":"sdz", "path":"/dev/sdz", "parttype":null, "mountpoint":null, "fstype":null, "label":null,
+         "children": [
+            {"name":"sdz1", "path":"/dev/sdz1", "parttype":"0fc63daf-8483-4772-8e79-3d69d8477de4", "mountpoint":"/", "fstype":"ext4", "label":null}
+         ]
+      },
+      {"name":"sr0", "path":"/dev/sr0", "parttype":null, "mountpoint":null, "fstype":null, "label":null}
+   ]
+}

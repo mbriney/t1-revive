@@ -1,0 +1,76 @@
+# test/test_helper/common.bash - shared setup for the t1-revive bats suite.
+# shellcheck shell=bash
+#
+# Every test runs against synthetic fixtures under test/fixtures and a throw-away state
+# directory. Tests that need lib/common.sh or lib/discover.sh call t1r_load, which skips
+# (not errors) when the file under test does not exist yet.
+
+T1R_TEST_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+T1R_REPO=$(cd -- "$T1R_TEST_DIR/.." && pwd)
+T1R_FIXTURES=$T1R_TEST_DIR/fixtures
+export T1R_TEST_DIR T1R_REPO T1R_FIXTURES
+
+# t1r_env: point every T1R_* override at fixtures and a temp dir. Called from setup().
+# T1R_TMP is the per-test scratch directory: BATS_TEST_TMPDIR (bats >= 1.4, cleaned up by bats)
+# or, on an older bats, a mktemp directory under BATS_RUN_TMPDIR/TMPDIR. Tests use $T1R_TMP and
+# never BATS_TEST_TMPDIR directly, so an unset variable can never turn into a path at /.
+t1r_env() {
+  local tmp=${BATS_TEST_TMPDIR:-}
+  [[ -n $tmp ]] || tmp=$(mktemp -d "${BATS_RUN_TMPDIR:-${TMPDIR:-/tmp}}/t1r-test.XXXXXX")
+  export T1R_TMP=$tmp
+  export T1R_ROOT=$T1R_REPO
+  export T1R_STATE=$tmp/state T1R_LOG=$tmp/log T1R_CACHE=$tmp/cache T1R_CONF=$tmp/conf
+  export T1R_PREFIX=$tmp/prefix
+  mkdir -p "$T1R_STATE" "$T1R_LOG" "$T1R_CACHE" "$T1R_CONF" "$T1R_PREFIX/bin"
+  export T1R_LOGFILE=$T1R_LOG/test.log
+  : >"$T1R_LOGFILE"
+  export T1R_NO_CONFIRM=1 T1R_DEMO=0 T1R_DRY_RUN=1 T1R_COMPONENT=test T1R_COLOR=0
+  unset T1R_LSBLK_JSON
+  t1r_use_sysfs none
+  t1r_use_dmi 14_3
+  export T1R_ACPI_TABLES=$T1R_FIXTURES/acpi-none   # does not exist: frst_method must cope
+  export TERM=dumb NO_COLOR=1
+}
+
+# t1r_use_sysfs NAME   -> T1R_SYSFS=test/fixtures/sysfs-NAME (recovery|booted-cfg1|booted-cfg2|none)
+t1r_use_sysfs() { export T1R_SYSFS=$T1R_FIXTURES/sysfs-$1; }
+# t1r_use_dmi NAME     -> T1R_DMI=test/fixtures/dmi-NAME (14_3|13_2|other)
+t1r_use_dmi() { export T1R_DMI=$T1R_FIXTURES/dmi-$1; }
+# t1r_use_lsblk NAME   -> T1R_LSBLK_JSON=test/fixtures/lsblk-NAME.json
+t1r_use_lsblk() { export T1R_LSBLK_JSON=$T1R_FIXTURES/lsblk-$1.json; }
+
+# t1r_load [discover]: source lib/common.sh (and lib/discover.sh) after the T1R_* variables
+# are set. Skips the test when the file is not there yet; fails when sourcing itself fails.
+t1r_load() {
+  local f
+  [[ -f $T1R_REPO/lib/common.sh ]] || skip "lib/common.sh not present"
+  # shellcheck source=/dev/null
+  source "$T1R_REPO/lib/common.sh" || { echo "sourcing lib/common.sh failed" >&2; return 1; }
+  for f in "$@"; do
+    [[ -f $T1R_REPO/lib/$f.sh ]] || skip "lib/$f.sh not present"
+    # shellcheck source=/dev/null
+    source "$T1R_REPO/lib/$f.sh" || { echo "sourcing lib/$f.sh failed" >&2; return 1; }
+  done
+}
+
+# t1r_need FUNC...: fail with a clear message when a contract function is missing.
+t1r_need() {
+  local f
+  for f in "$@"; do
+    declare -F "$f" >/dev/null || { echo "contract function not defined: $f" >&2; return 1; }
+  done
+}
+
+# --- tiny assertions (no bats-assert dependency) -------------------------------------
+assert_eq() {  # assert_eq EXPECTED ACTUAL [WHAT]
+  [[ $1 == "$2" ]] || { printf '%s\n  expected: %q\n  actual:   %q\n' "${3:-values differ}" "$1" "$2" >&2; return 1; }
+}
+assert_status() {  # assert_status N   (after `run`)
+  [[ $status -eq $1 ]] || { printf 'expected exit %s, got %s\n--- output ---\n%s\n' "$1" "$status" "$output" >&2; return 1; }
+}
+assert_contains() {  # assert_contains HAYSTACK NEEDLE
+  [[ $1 == *"$2"* ]] || { printf 'expected to find %q in:\n%s\n' "$2" "$1" >&2; return 1; }
+}
+refute_contains() {  # refute_contains HAYSTACK NEEDLE
+  [[ $1 != *"$2"* ]] || { printf 'did not expect %q in:\n%s\n' "$2" "$1" >&2; return 1; }
+}

@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# t1-revive pre-commit hook: identifier scan + bash -n on the staged content.
+# Enable with:  make hooks   (sets git config core.hooksPath .githooks)
+set -uo pipefail
+
+root=$(git rev-parse --show-toplevel) || exit 1
+cd "$root" || exit 1
+fail=0
+errf=$(mktemp "${TMPDIR:-/tmp}/t1r-precommit.XXXXXX") || exit 1
+trap 'rm -f "$errf"' EXIT
+
+if ! bash tools/scan-identifiers.sh --staged; then
+  fail=1
+fi
+
+bats_staged=0
+while IFS= read -r -d '' f; do
+  case $f in
+    *.bats) bats_staged=1; continue ;;   # not bash: `@test NAME {` is bats syntax (see below)
+    *.sh|*.bash|bin/*|.githooks/*) ;;
+    *) continue ;;
+  esac
+  content=$(git show ":$f" 2>/dev/null) || continue
+  case $f in
+    *.sh|*.bash) ;;
+    *) [[ $content == '#!'*bash* ]] || continue ;;   # bin/* and hooks: only bash scripts
+  esac
+  if ! bash -n <(printf '%s\n' "$content") 2>"$errf"; then
+    echo "pre-commit: bash -n failed for $f:" >&2
+    sed 's|/dev/fd/[0-9]*|'"$f"'|' "$errf" >&2
+    fail=1
+  fi
+  : >"$errf"
+done < <(git diff --cached --name-only --diff-filter=ACMR -z)
+
+# A staged .bats file cannot be parsed in isolation (its `load` lines resolve relative to
+# test/), so check the work tree instead: `bats --count` sources every suite without running it.
+if (( bats_staged )) && command -v bats >/dev/null 2>&1; then
+  if ! bats --count test/ >/dev/null; then
+    echo "pre-commit: bats cannot parse test/ (see above)" >&2
+    fail=1
+  fi
+fi
+
+if (( fail )); then
+  echo "pre-commit: refusing the commit (see above). Bypass only with --no-verify and a reason." >&2
+  exit 1
+fi
+exit 0

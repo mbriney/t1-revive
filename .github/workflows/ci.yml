@@ -1,0 +1,97 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  # Same pinned release as the maintainers' devtools; the project publishes no checksum file,
+  # so this is the sha512 of the tarball we vetted (see tools/ and HANDOFF-D.md).
+  SHELLCHECK_VERSION: v0.10.0
+  SHELLCHECK_SHA512: 31006830087c2b9ffe9fa36c1ab4a8b11c85078cac8203265d0cfd630c70a4a506e66dd9d7ccde964360ad95045894149de457db34f10cad76708c7a4aa544ca
+
+jobs:
+  quality:
+    name: lint, scan, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck (pinned static release) and bats
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/sc.tar.xz \
+            "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz"
+          echo "${SHELLCHECK_SHA512}  /tmp/sc.tar.xz" | sha512sum -c -
+          tar -xJf /tmp/sc.tar.xz -C /tmp
+          sudo install -m755 "/tmp/shellcheck-${SHELLCHECK_VERSION}/shellcheck" /usr/local/bin/shellcheck
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bats jq gawk
+          shellcheck --version
+          bats --version
+
+      - name: bash -n
+        run: make syntax
+
+      - name: shellcheck
+        run: make shellcheck
+
+      - name: identifier scan
+        run: bash tools/scan-identifiers.sh --self-test && bash tools/scan-identifiers.sh
+
+      - name: banned ACPI method name (AGENTS.md rule 1)
+        run: bash tools/scan-identifiers.sh --banned-only
+
+      # An independent, dumb grep over the tracked files, so rule 1 does not depend on the
+      # scanner being correct. The four documents that exist to say the method is never called
+      # are excluded; everything else, comments included, fails the build. The word is built
+      # with printf so this workflow file does not contain it.
+      - name: banned ACPI method name (independent grep)
+        run: |
+          set -uo pipefail
+          word=$(printf 'S%sCW' O)
+          hits=$(git grep -nI --untracked -e "$word" -- . \
+            ':!AGENTS.md' ':!CLAUDE.md' ':!README.md' ':!docs/how-it-works.md' || true)
+          if [ -n "$hits" ]; then
+            echo "AGENTS.md rule 1: the forbidden ACPI method name appears in:" >&2
+            echo "$hits" >&2
+            exit 1
+          fi
+          echo "rule 1: clean"
+
+      - name: bats
+        run: make test BATS_ARGS="--print-output-on-failure"
+
+  build-arch:
+    name: build the patched stack on Arch
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install build dependencies
+        run: |
+          pacman -Syu --noconfirm --needed \
+            base-devel git curl ca-certificates autoconf automake libtool pkgconf \
+            libusb openssl libzip zlib readline python jq
+
+      - uses: actions/checkout@v4
+
+      - name: build.sh --prefix /tmp/prefix
+        run: bash build.sh --prefix /tmp/prefix
+
+      - name: smoke-test the result
+        run: |
+          set -uo pipefail
+          export LD_LIBRARY_PATH=/tmp/prefix/lib:/tmp/prefix/lib64
+          rc=0
+          for b in /tmp/prefix/bin/idevicerestore /tmp/prefix/bin/irecovery \
+                   /tmp/prefix/bin/plistutil /tmp/prefix/sbin/usbmuxd; do
+            if [ -x "$b" ]; then
+              "$b" --version || { echo "$b --version failed" >&2; rc=1; }
+            else
+              echo "missing: $b" >&2; rc=1
+            fi
+          done
+          exit $rc
