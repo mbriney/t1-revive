@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+# t1-revive - regenerate the Apple T1 firmware data of a 2016/2017 Touch Bar MacBook Pro from Linux.
+#
+#   t1-revive [GLOBAL FLAGS] SUBCOMMAND [ARGS]
+#
+# Resolves T1R_ROOT from its own location (a git checkout or /usr/lib/t1-revive), loads the
+# libraries and dispatches cmd_<subcommand>. See `t1-revive help`.
+set -uo pipefail
+
+_t1r_resolve_root() {
+  local self dir
+  self=${BASH_SOURCE[0]}
+  self=$(readlink -f -- "$self" 2>/dev/null || printf '%s' "$self")
+  dir=$(cd -- "$(dirname -- "$self")/.." 2>/dev/null && pwd -P)
+  if [[ -n "$dir" ]] && [[ -r "$dir/lib/common.sh" ]]; then printf '%s\n' "$dir"; return 0; fi
+  if [[ -r /usr/lib/t1-revive/lib/common.sh ]]; then printf '/usr/lib/t1-revive\n'; return 0; fi
+  return 1
+}
+
+if [[ -z "${T1R_ROOT:-}" ]] || [[ ! -r "${T1R_ROOT:-}/lib/common.sh" ]]; then
+  T1R_ROOT=$(_t1r_resolve_root) || { echo "t1-revive: cannot find lib/common.sh next to $0 or under /usr/lib/t1-revive" >&2; exit 1; }
+fi
+export T1R_ROOT
+
+usage() {
+  cat <<'EOF'
+usage: t1-revive [--no-confirm] [--demo] [--dry-run] [--state DIR] [--log DIR] [--firmware FILE] SUBCOMMAND [ARGS]
+
+subcommands
+  preflight [--local] [--install]   check the machine; nothing touches the T1 (exit 3 = fix the NO lines)
+  backup [--to DIR]                 save EFI/APPLE from the ESP (tar, root-only); --to copies it to a stick
+  status                            one screen: model, T1, ESP, state, t1bridge
+  regenerate [--from STEP]          pass-a -> frst -> pass-b -> frst -> phase14 -> stage -> handover
+  stage [--dry-run]                 write the regenerated files to the ESP
+  handover                          hand the booted T1 to t1bridge without a reboot
+  report                            redacted diagnostic bundle to paste into an issue
+  version                           print the tool version
+  help                              this text
+
+global flags (before the subcommand)
+  --no-confirm   do not ask before device-touching steps       (T1R_NO_CONFIRM=1)
+  --demo         on-camera mode: generic lines on screen, details to the log; implies --no-confirm (T1R_DEMO=1)
+  --dry-run      print what would happen; no device, ESP or network writes (T1R_DRY_RUN=1)
+  --state DIR    private state directory (default /var/lib/t1-revive)  (T1R_STATE)
+  --log DIR      log directory (default /var/log/t1-revive)            (T1R_LOG)
+  --firmware FILE  use this EmbeddedOSFirmware.pkg instead of downloading it (T1R_FIRMWARE)
+
+exit codes: 0 ok, 1 failure, 2 usage, 3 preflight failed, 4 refused for safety,
+            5 device in an unexpected state, 6 network/Apple failure, 7 reboot needed
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --no-confirm) export T1R_NO_CONFIRM=1;;
+    --demo) export T1R_DEMO=1 T1R_NO_CONFIRM=1;;
+    --dry-run) export T1R_DRY_RUN=1;;
+    --state) [[ $# -ge 2 ]] || { usage >&2; exit 2; }; export T1R_STATE=$2; shift;;
+    --state=*) export T1R_STATE=${1#--state=};;
+    --log) [[ $# -ge 2 ]] || { usage >&2; exit 2; }; export T1R_LOG=$2; shift;;
+    --log=*) export T1R_LOG=${1#--log=};;
+    --firmware) [[ $# -ge 2 ]] || { usage >&2; exit 2; }; export T1R_FIRMWARE=$2; shift;;
+    --firmware=*) export T1R_FIRMWARE=${1#--firmware=};;
+    -h|--help|help) usage; exit 0;;
+    -V|--version|version) break;;
+    --) shift; break;;
+    -*) echo "t1-revive: unknown flag $1" >&2; usage >&2; exit 2;;
+    *) break;;
+  esac
+  shift
+done
+
+# shellcheck source=../lib/common.sh
+. "$T1R_ROOT/lib/common.sh"
+# shellcheck source=../lib/discover.sh
+. "$T1R_ROOT/lib/discover.sh"
+# shellcheck source=../lib/distro.sh
+. "$T1R_ROOT/lib/distro.sh"
+load_conf
+
+sub=${1:-help}
+[[ $# -gt 0 ]] && shift
+case "$sub" in
+  version|-V|--version) version; exit 0;;
+  help|-h|--help) usage; exit 0;;
+  preflight|backup|status|regenerate|stage|handover|report) ;;
+  *) echo "t1-revive: unknown subcommand '$sub'" >&2; usage >&2; exit 2;;
+esac
+
+export T1R_CMD=$sub
+T1R_COMPONENT=$sub
+
+# Optional libraries from the other streams: loaded when present.
+for f in firmware report; do
+  # shellcheck disable=SC1090
+  [[ -r "$T1R_ROOT/lib/$f.sh" ]] && . "$T1R_ROOT/lib/$f.sh"
+done
+if [[ -r "$T1R_ROOT/lib/cmd-$sub.sh" ]]; then
+  # shellcheck disable=SC1090
+  . "$T1R_ROOT/lib/cmd-$sub.sh"
+fi
+if ! declare -F "cmd_$sub" >/dev/null 2>&1; then
+  echo "t1-revive: '$sub' is not implemented yet (lib/cmd-$sub.sh does not define cmd_$sub)" >&2
+  exit 1
+fi
+
+"cmd_$sub" "$@"
