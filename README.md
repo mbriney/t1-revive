@@ -201,7 +201,7 @@ Related contributions to the projects around this tool:
 | Project | Change | Status |
 | --- | --- | --- |
 | omacom/omarchy-iso | preserve `EFI/APPLE` across the installer's disk wipe (the root fix for basecamp/omarchy#8271) | [omarchy-iso#174](https://github.com/omacom/omarchy-iso/pull/174), open |
-| basecamp/omarchy | lock screen keeps the fingerprint reader idle while the display is blanked | PR in preparation |
+| basecamp/omarchy | lock screen keeps the fingerprint reader idle while the display is blanked | [omarchy#11273](https://github.com/omacom/omarchy/pull/11273), open |
 | standardagents/t1bridge | bplist offset widths 1 to 8 bytes (the width the T1 writes) | [#16](https://github.com/standardagents/t1bridge/pull/16), merged, shipped in 0.1.6 |
 | standardagents/t1bridge | issues from this work | [#21](https://github.com/standardagents/t1bridge/issues/21) failed keybag unit blocks enrollment; [#22](https://github.com/standardagents/t1bridge/issues/22) document the no-reboot handover; data points on [#14](https://github.com/standardagents/t1bridge/issues/14) |
 
