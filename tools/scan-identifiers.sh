@@ -241,7 +241,7 @@ main() {
   if (( staged )); then
     local f tmp
     tmp=$(mktemp -d "${TMPDIR:-/tmp}/t1r-scan.XXXXXX") || exit 1
-    trap 'rm -rf "$tmp"' EXIT
+    trap 'rm -rf "${tmp:-}"' EXIT
     while IFS= read -r -d '' f; do
       git -C "$root" show ":$f" > "$tmp/blob" 2>/dev/null || continue
       scan_file "$tmp/blob" "$f" "$allowlist" "$banned_only" || hits=1
