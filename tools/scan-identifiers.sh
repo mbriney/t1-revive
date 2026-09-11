@@ -144,7 +144,7 @@ list_tree() {
 self_test() {
   local tmp rc=0 failed=0
   tmp=$(mktemp -d "${TMPDIR:-/tmp}/t1r-scan-selftest.XXXXXX") || exit 1
-  trap 'rm -rf "$tmp"' RETURN
+  trap 'rm -rf "${tmp:-}"' RETURN
   mkdir -p "$tmp/pos" "$tmp/neg"
   # Positive cases are built by concatenation so this file stays clean.
   local hex mac
