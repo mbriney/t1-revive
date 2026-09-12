@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="560" viewBox="0 0 1280 560" role="img" aria-label="t1-revive regenerate: from a wiped ESP to a booted T1 in about five minutes">
+  <defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#07091a"/>
+    <stop offset="0.55" stop-color="#101338"/>
+    <stop offset="1" stop-color="#1a1248"/>
+  </linearGradient>
+  <linearGradient id="spectrum" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#ff5d73"/>
+    <stop offset="0.22" stop-color="#ffc46b"/>
+    <stop offset="0.48" stop-color="#3ee8a8"/>
+    <stop offset="0.74" stop-color="#3ecbff"/>
+    <stop offset="1" stop-color="#8b7cff"/>
+  </linearGradient>
+  <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#ffffff"/>
+    <stop offset="1" stop-color="#c5cdff"/>
+  </linearGradient>
+  <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/>
+    <stop offset="1" stop-color="#ffffff" stop-opacity="0.03"/>
+  </linearGradient>
+  <radialGradient id="orbV" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#8b7cff" stop-opacity="0.55"/>
+    <stop offset="1" stop-color="#8b7cff" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="orbC" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#3ecbff" stop-opacity="0.40"/>
+    <stop offset="1" stop-color="#3ecbff" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="orbM" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#3ee8a8" stop-opacity="0.45"/>
+    <stop offset="1" stop-color="#3ee8a8" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="glow" x="-20%" y="-200%" width="140%" height="500%">
+    <feGaussianBlur stdDeviation="14"/>
+  </filter>
+  <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="40"/>
+  </filter>
+  <filter id="tinyglow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="6"/>
+  </filter>
+</defs>
+  <rect width="1280" height="560" rx="28" fill="#07091a" stroke="#ffffff" stroke-opacity="0.12"/>
+  <path d="M0 0 h1280 v48 h-1280 z" fill="#0e1230"/>
+  <path d="M0 0 h1280 a28 28 0 0 0 -28 -28 h-1224 a28 28 0 0 0 -28 28" fill="#0e1230"/>
+  <rect width="1280" height="48" rx="28" fill="#0e1230"/>
+  <rect y="24" width="1280" height="24" fill="#0e1230"/>
+  <circle cx="32" cy="24" r="7" fill="#ff5d73"/>
+  <circle cx="56" cy="24" r="7" fill="#ffc46b"/>
+  <circle cx="80" cy="24" r="7" fill="#3ee8a8"/>
+  <text x="640" y="30" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="13" fill="#8b93c2">t1-revive  ·  regenerate</text>
+  <text x="36" y="92" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#e8ecff" font-variant-ligatures="none">$ sudo t1-revive regenerate</text><text x="36" y="124" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#3ee8a8" font-variant-ligatures="none">====  preflight</text><text x="36" y="146" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="500" fill="#b7c0e6" font-variant-ligatures="none">   model: MacBookPro14,3 (tested)</text><text x="36" y="168" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="500" fill="#b7c0e6" font-variant-ligatures="none">   firmware bundle OK · patched tools OK</text><text x="36" y="190" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="500" fill="#b7c0e6" font-variant-ligatures="none">   no EFI/APPLE/EMBEDDEDOS on the ESP</text><text x="36" y="212" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="500" fill="#b7c0e6" font-variant-ligatures="none">   T1 now: 1281   start: provision</text><text x="36" y="244" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#ffc46b" font-variant-ligatures="none">   ?  start the regeneration at 'provision'</text><text x="36" y="266" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="500" fill="#6b7394" font-variant-ligatures="none">     Press Enter to continue, or Ctrl-C to stop.</text><text x="36" y="298" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#3ee8a8" font-variant-ligatures="none">====  Step 1 of 4: the T1 asks Apple for its own data</text><text x="36" y="320" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="500" fill="#9aa3c7" font-variant-ligatures="none">   FDRData ready</text><text x="36" y="342" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#3ee8a8" font-variant-ligatures="none">====  Step 2 of 4: personalising the T1's boot image</text><text x="36" y="364" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="500" fill="#9aa3c7" font-variant-ligatures="none">   image + ticket captured</text><text x="36" y="386" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#3ee8a8" font-variant-ligatures="none">====  Step 3 of 4: booting the T1</text><text x="36" y="408" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="500" fill="#9aa3c7" font-variant-ligatures="none">   T1 at 8600 · watch the Touch Bar</text><text x="36" y="430" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#3ee8a8" font-variant-ligatures="none">====  Step 4 of 4: making it permanent</text><text x="36" y="452" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="500" fill="#9aa3c7" font-variant-ligatures="none">   staged EFI/APPLE/EMBEDDEDOS · handover to t1bridge</text><text x="36" y="484" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="800" fill="#3ee8a8" font-variant-ligatures="none">====  regenerate complete. T1: 8600</text><text x="36" y="506" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="700" fill="#3ee8a8" font-variant-ligatures="none">   4 min 8 s · no reboot</text>
+  <rect x="0" y="552" width="1280" height="8" fill="url(#spectrum)"/>
+</svg>

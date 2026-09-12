@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="docs/assets/hero.svg" alt="t1-revive: Touch Bar, camera and Touch ID back on a 2016 or 2017 MacBook Pro, from Linux alone" width="100%">
+<img src="docs/assets/logo.png" width="128" alt="t1-revive mark: a glowing Touch Bar and Touch ID">
 
-<br>
+<img src="docs/assets/hero.svg" alt="t1-revive: Touch Bar, camera and Touch ID back on a 2016 or 2017 MacBook Pro, from Linux alone" width="100%">
 
 **Regenerates the Apple T1 firmware data of a 2016 or 2017 Touch Bar MacBook Pro, from Linux alone.**
 
@@ -12,14 +12,15 @@
 [![tested: MacBookPro14,3](https://img.shields.io/badge/tested_on-MacBookPro14%2C3-22c55e.svg?logo=apple&logoColor=white)](#-tested)
 [![shell: bash](https://img.shields.io/badge/bash-shellcheck_%2B_bats-4EAA25.svg?logo=gnubash&logoColor=white)](#-upstream-status)
 [![companion: t1bridge](https://img.shields.io/badge/companion-t1bridge-a855f7.svg?logo=fingerprint&logoColor=white)](https://github.com/standardagents/t1bridge)
+[![no macOS](https://img.shields.io/badge/macOS-not_required-3ee8a8.svg)](#-install)
 
-[📋 Requirements](#-requirements) ·
-[📦 Install](#-install) ·
-[🚀 The flow](#-the-flow) ·
-[🔐 Apple and your disk](#-what-talks-to-apple-and-what-is-stored-where) ·
-[✨ After it works](#-after-it-works) ·
-[🧪 Testing](#-testing-and-reporting) ·
-[💛 Credits](#-credits)
+[Requirements](#-requirements) ·
+[Install](#-install) ·
+[The flow](#-the-flow) ·
+[Apple and your disk](#-what-talks-to-apple-and-what-is-stored-where) ·
+[After it works](#-after-it-works) ·
+[Testing](#-testing-and-reporting) ·
+[Credits](#-credits)
 
 </div>
 
@@ -56,6 +57,14 @@ Touch ID.
 > - One machine so far. Everything below was proven on one MacBookPro14,3, several times,
 >   including from a fresh install. That is evidence, not coverage.
 > - The tool never calls the ACPI method `SOCW`. The only T1 reset it uses is `FRST`.
+
+<img src="docs/assets/hardware.jpg" alt="A space-gray Touch Bar MacBook Pro with the strip lit and Touch ID glowing, the kind of machine t1-revive is for" width="100%">
+
+<p align="center"><sub>The 2016/2017 Touch Bar MacBook Pro. The strip is the T1. This tool brings it back.</sub></p>
+
+<img src="docs/assets/before-after.svg" alt="From a dark Touch Bar in recovery (05ac:1281) to a lit bar at 05ac:8600" width="100%">
+
+<img src="docs/assets/features.svg" alt="What comes back: Touch Bar, camera, and Touch ID" width="100%">
 
 ## ✅ Tested
 
@@ -123,19 +132,9 @@ sudo t1-revive backup --to PATH             # 2. recommended; copies EFI/APPLE o
 sudo t1-revive regenerate                   # 3. provision, reset, personalize, reset, boot, stage, handover
 ```
 
-```mermaid
-flowchart LR
-    A[provision]:::apple --> B[reset]:::device --> C[personalize]:::apple --> D[reset]:::device
-    D --> E[boot]:::device --> F[stage]:::disk --> G[handover]:::bridge
-    classDef apple  fill:#fb923c,stroke:#c2410c,color:#1c1917,font-weight:bold
-    classDef device fill:#38bdf8,stroke:#0369a1,color:#0c1a24,font-weight:bold
-    classDef disk   fill:#4ade80,stroke:#15803d,color:#052e16,font-weight:bold
-    classDef bridge fill:#c084fc,stroke:#7e22ce,color:#1e0a2e,font-weight:bold
-```
+<img src="docs/assets/terminal.svg" alt="t1-revive regenerate: from a wiped ESP to a booted T1 in about five minutes" width="100%">
 
-<p align="center"><sub>
-🟠 talks to Apple's servers &nbsp;·&nbsp; 🔵 touches the T1 only &nbsp;·&nbsp; 🟢 writes the ESP &nbsp;·&nbsp; 🟣 hands the booted T1 to t1bridge
-</sub></p>
+<img src="docs/assets/flow.svg" alt="provision, reset, personalize, reset, boot, stage, handover" width="100%">
 
 **1. Preflight** runs read-only checks and installs the few packages the restore needs.
 

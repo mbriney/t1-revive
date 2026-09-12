@@ -62,7 +62,7 @@ packaging/arch/PKGBUILD  AUR recipe (builds vendor/ from pinned tags; nothing fr
 contrib/stick/           install-stick files: README.txt, install-nvram.sh, nvram template
 skills/t1-revive-tester/SKILL.md   the tester-facing agent skill
 test/                    bats tests + fixtures; test/fixtures/** holds synthetic sysfs/lsblk/DMI/ACPI
-docs/                    how-it-works, threat-model, troubleshooting, diagnostics, hardware-validation, omarchy, firmware, install-stick
+docs/                    how-it-works, threat-model, troubleshooting, diagnostics, hardware-validation, omarchy, firmware, install-stick, assets/ (README visuals; regenerate with docs/assets/gen.py)
 .github/                 issue templates, CI workflow
 ```
 

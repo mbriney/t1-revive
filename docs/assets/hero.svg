@@ -1,90 +1,133 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="330" viewBox="0 0 1200 330" role="img" aria-label="t1-revive: the Touch Bar of a 2016 or 2017 MacBook Pro coming back to life under Linux">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-label="t1-revive: Touch Bar, camera and Touch ID back on a 2016 or 2017 MacBook Pro, from Linux alone">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0b1022"/>
-      <stop offset="1" stop-color="#1c1447"/>
-    </linearGradient>
-    <linearGradient id="spectrum" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#ff5f6d"/>
-      <stop offset="0.3" stop-color="#ffb35c"/>
-      <stop offset="0.55" stop-color="#3ddc97"/>
-      <stop offset="0.8" stop-color="#36c5f0"/>
-      <stop offset="1" stop-color="#7b6cff"/>
-    </linearGradient>
-    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="1" stop-color="#c7d2ff"/>
-    </linearGradient>
-    <radialGradient id="orb" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#3ddc97" stop-opacity="0.9"/>
-      <stop offset="1" stop-color="#3ddc97" stop-opacity="0"/>
-    </radialGradient>
-    <filter id="glow" x="-10%" y="-300%" width="120%" height="700%">
-      <feGaussianBlur stdDeviation="16"/>
-    </filter>
-    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="30"/>
-    </filter>
+    
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#07091a"/>
+    <stop offset="0.55" stop-color="#101338"/>
+    <stop offset="1" stop-color="#1a1248"/>
+  </linearGradient>
+  <linearGradient id="spectrum" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#ff5d73"/>
+    <stop offset="0.22" stop-color="#ffc46b"/>
+    <stop offset="0.48" stop-color="#3ee8a8"/>
+    <stop offset="0.74" stop-color="#3ecbff"/>
+    <stop offset="1" stop-color="#8b7cff"/>
+  </linearGradient>
+  <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#ffffff"/>
+    <stop offset="1" stop-color="#c5cdff"/>
+  </linearGradient>
+  <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/>
+    <stop offset="1" stop-color="#ffffff" stop-opacity="0.03"/>
+  </linearGradient>
+  <radialGradient id="orbV" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#8b7cff" stop-opacity="0.55"/>
+    <stop offset="1" stop-color="#8b7cff" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="orbC" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#3ecbff" stop-opacity="0.40"/>
+    <stop offset="1" stop-color="#3ecbff" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="orbM" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#3ee8a8" stop-opacity="0.45"/>
+    <stop offset="1" stop-color="#3ee8a8" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="glow" x="-20%" y="-200%" width="140%" height="500%">
+    <feGaussianBlur stdDeviation="14"/>
+  </filter>
+  <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="40"/>
+  </filter>
+  <filter id="tinyglow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="6"/>
+  </filter>
+
+    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="1.2" fill="#ffffff" opacity="0.045"/>
+    </pattern>
   </defs>
 
-  <!-- background -->
-  <rect width="1200" height="330" rx="26" fill="url(#bg)"/>
-  <circle cx="1010" cy="60" r="150" fill="#7b6cff" opacity="0.18" filter="url(#soft)"/>
-  <circle cx="220" cy="300" r="130" fill="#36c5f0" opacity="0.14" filter="url(#soft)"/>
+  <rect width="1280" height="420" rx="32" fill="url(#bg)"/>
+  <rect width="1280" height="420" rx="32" fill="url(#dots)"/>
+  <circle cx="1120" cy="40" r="220" fill="url(#orbV)" filter="url(#soft)"/>
+  <circle cx="180" cy="400" r="200" fill="url(#orbC)" filter="url(#soft)"/>
+  <circle cx="720" cy="20" r="140" fill="url(#orbM)" opacity="0.7" filter="url(#soft)"/>
 
-  <!-- title -->
-  <text x="80" y="128" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="84" font-weight="800" letter-spacing="-3" fill="url(#title)">t1-revive</text>
-  <text x="84" y="172" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" fill="#aab4d6">Touch Bar, camera and Touch ID back on a 2016 or 2017 MacBook Pro. From Linux alone.</text>
-
-  <!-- model pill -->
-  <g transform="translate(80 196)">
-    <rect width="470" height="34" rx="17" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.14"/>
-    <text x="18" y="22" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15" fill="#dfe5ff">MacBookPro13,2 · 13,3 · 14,2 · 14,3</text>
-    <circle cx="410" cy="17" r="5" fill="#3ddc97"/>
-    <text x="422" y="22" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#3ddc97">Apple T1</text>
-  </g>
-
-  <!-- the Touch Bar: glow, then the strip -->
-  <rect x="80" y="262" width="1040" height="30" rx="15" fill="url(#spectrum)" opacity="0.75" filter="url(#glow)"/>
-  <rect x="80" y="258" width="1040" height="38" rx="12" fill="#05060d" stroke="#ffffff" stroke-opacity="0.12"/>
-
-  <!-- esc key -->
-  <rect x="92" y="266" width="64" height="22" rx="6" fill="#ffffff" fill-opacity="0.10"/>
-  <text x="124" y="282" text-anchor="middle" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#c9d0ea">esc</text>
-
-  <!-- app strip: the colour coming back -->
-  <rect x="172" y="266" width="560" height="22" rx="6" fill="url(#spectrum)" opacity="0.92"/>
-  <g fill="#05060d" fill-opacity="0.35">
-    <rect x="186" y="270" width="70" height="14" rx="4"/>
-    <rect x="266" y="270" width="110" height="14" rx="4"/>
-    <rect x="386" y="270" width="150" height="14" rx="4"/>
-    <rect x="546" y="270" width="80" height="14" rx="4"/>
-    <rect x="636" y="270" width="82" height="14" rx="4"/>
-  </g>
-
-  <!-- control strip -->
-  <g>
-    <rect x="750" y="266" width="44" height="22" rx="6" fill="#36c5f0" fill-opacity="0.85"/>
-    <rect x="802" y="266" width="44" height="22" rx="6" fill="#ffb35c" fill-opacity="0.85"/>
-    <rect x="854" y="266" width="44" height="22" rx="6" fill="#ff5f6d" fill-opacity="0.85"/>
-    <rect x="906" y="266" width="44" height="22" rx="6" fill="#7b6cff" fill-opacity="0.85"/>
-    <g fill="#05060d" fill-opacity="0.55">
-      <rect x="766" y="273" width="12" height="8" rx="2"/>
-      <rect x="818" y="273" width="12" height="8" rx="2"/>
-      <rect x="870" y="273" width="12" height="8" rx="2"/>
-      <rect x="922" y="273" width="12" height="8" rx="2"/>
+  <!-- mark -->
+  <g transform="translate(72 56)">
+    <rect width="54" height="54" rx="16" fill="#0c1024" stroke="#ffffff" stroke-opacity="0.12"/>
+    <rect x="7" y="22" width="26" height="10" rx="5" fill="url(#spectrum)"/>
+    <circle cx="41" cy="27" r="7" fill="#071018" stroke="#3ee8a8" stroke-width="1.4"/>
+    <g transform="translate(41 27)" fill="none" stroke="#3ee8a8" stroke-width="1.15" stroke-linecap="round">
+      <path d="M 0 -0.75 v 2.75"/>
+      <path d="M -2.75 0.75 A 2.75 2.75 0 0 1 2.75 0.75"/>
+      <path d="M -4.25 0.25 A 4.25 4.25 0 0 1 4.25 0.25"/>
+      <path d="M -1.60 1.40 A 1.60 1.60 0 0 1 1.60 1.40"/>
+      <path d="M -3.50 -1.10 A 3.60 3.60 0 0 1 0.90 -3.90"/>
     </g>
   </g>
 
-  <!-- Touch ID -->
-  <g transform="translate(1078 277)">
-    <circle r="34" fill="url(#orb)" opacity="0.7"/>
-    <circle r="15" fill="#0a0c18" stroke="#3ddc97" stroke-width="1.5" stroke-opacity="0.9"/>
-    <g fill="none" stroke="#3ddc97" stroke-width="1.6" stroke-linecap="round" opacity="0.95">
-      <path d="M -8 3 A 8.5 8.5 0 0 1 8 3"/>
-      <path d="M -5 6 A 5 5 0 0 1 5 6"/>
-      <path d="M -2 8 A 2 2 0 0 1 2 8"/>
-      <path d="M -10 -1 A 11 11 0 0 1 10 -1"/>
+  <text x="144" y="94" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="6" fill="#8b93c2">LINUX · APPLE T1</text>
+
+  <text x="72" y="178" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="86" font-weight="800" letter-spacing="-3.5" fill="url(#title)">t1-revive</text>
+  <text x="74" y="228" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" fill="#b7c0e6">Touch Bar, camera and Touch ID. Back from Linux. This chip’s own data.</text>
+
+  <g transform="translate(72 258)">
+      <rect width="268" height="36" rx="18.0" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.14"/>
+      <text x="134.0" y="24.48" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#dfe5ff">MacBookPro 13,2 · 13,3 · 14,2 · 14,3</text>
+    </g>
+  <g transform="translate(352 258)">
+      <rect width="168" height="36" rx="18.0" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.14"/>
+      <text x="84.0" y="24.48" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#dfe5ff">no macOS install</text>
+    </g>
+  <g transform="translate(532 258)">
+      <rect width="156" height="36" rx="18.0" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.14"/>
+      <text x="78.0" y="24.48" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#dfe5ff">no other Mac</text>
+    </g>
+  <g transform="translate(700 258)">
+      <rect width="150" height="36" rx="18.0" fill="#3ee8a8" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.35"/>
+      <text x="75.0" y="24.48" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#3ee8a8">~5 minutes</text>
+    </g>
+
+  <!-- stats -->
+  <g transform="translate(980 130)" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <text x="0" y="0" font-size="36" font-weight="800" fill="#f3f5ff">4 min 8 s</text>
+    <text x="0" y="26" font-size="14" fill="#8b93c2">wiped ESP → booted T1</text>
+    <text x="0" y="84" font-size="36" font-weight="800" fill="#3ee8a8">0 reboots</text>
+    <text x="0" y="110" font-size="14" fill="#8b93c2">one sitting · on mains power</text>
+  </g>
+
+  <!-- signature Touch Bar -->
+  <rect x="72" y="338" width="1136" height="28" rx="14" fill="url(#spectrum)" opacity="0.55" filter="url(#glow)"/>
+  <rect x="72" y="334" width="1136" height="36" rx="12" fill="#05060d" stroke="#ffffff" stroke-opacity="0.12"/>
+  <rect x="84" y="342" width="58" height="20" rx="6" fill="#ffffff" fill-opacity="0.10"/>
+  <text x="113" y="357" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#c9d0ea">esc</text>
+  <rect x="152" y="342" width="860" height="20" rx="6" fill="url(#spectrum)"/>
+  <g fill="#05060d" fill-opacity="0.16">
+    <rect x="168" y="346" width="70" height="12" rx="3"/>
+    <rect x="248" y="346" width="110" height="12" rx="3"/>
+    <rect x="368" y="346" width="150" height="12" rx="3"/>
+    <rect x="528" y="346" width="80" height="12" rx="3"/>
+    <rect x="618" y="346" width="92" height="12" rx="3"/>
+    <rect x="720" y="346" width="64" height="12" rx="3"/>
+    <rect x="794" y="346" width="88" height="12" rx="3"/>
+    <rect x="892" y="346" width="100" height="12" rx="3"/>
+  </g>
+  <g>
+    <rect x="1024" y="342" width="36" height="20" rx="5" fill="#3ecbff" fill-opacity="0.9"/>
+    <rect x="1066" y="342" width="36" height="20" rx="5" fill="#ffc46b" fill-opacity="0.9"/>
+    <rect x="1108" y="342" width="36" height="20" rx="5" fill="#ff5d73" fill-opacity="0.9"/>
+  </g>
+  <g transform="translate(1188 352)">
+    <circle r="22" fill="#3ee8a8" opacity="0.22" filter="url(#tinyglow)"/>
+    <circle r="14" fill="#071018" stroke="#3ee8a8" stroke-width="1.6"/>
+    <g transform="translate(0 0)" fill="none" stroke="#3ee8a8" stroke-width="1.35" stroke-linecap="round">
+      <path d="M 0 -1.20 v 4.40"/>
+      <path d="M -4.40 1.20 A 4.40 4.40 0 0 1 4.40 1.20"/>
+      <path d="M -6.80 0.40 A 6.80 6.80 0 0 1 6.80 0.40"/>
+      <path d="M -2.56 2.24 A 2.56 2.56 0 0 1 2.56 2.24"/>
+      <path d="M -5.60 -1.76 A 5.76 5.76 0 0 1 1.44 -6.24"/>
     </g>
   </g>
 </svg>

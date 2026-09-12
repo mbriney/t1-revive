@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="168" viewBox="0 0 1280 168" role="img" aria-label="From a dark Touch Bar in recovery to a lit bar at 05ac:8600">
+  <defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#07091a"/>
+    <stop offset="0.55" stop-color="#101338"/>
+    <stop offset="1" stop-color="#1a1248"/>
+  </linearGradient>
+  <linearGradient id="spectrum" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#ff5d73"/>
+    <stop offset="0.22" stop-color="#ffc46b"/>
+    <stop offset="0.48" stop-color="#3ee8a8"/>
+    <stop offset="0.74" stop-color="#3ecbff"/>
+    <stop offset="1" stop-color="#8b7cff"/>
+  </linearGradient>
+  <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#ffffff"/>
+    <stop offset="1" stop-color="#c5cdff"/>
+  </linearGradient>
+  <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/>
+    <stop offset="1" stop-color="#ffffff" stop-opacity="0.03"/>
+  </linearGradient>
+  <radialGradient id="orbV" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#8b7cff" stop-opacity="0.55"/>
+    <stop offset="1" stop-color="#8b7cff" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="orbC" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#3ecbff" stop-opacity="0.40"/>
+    <stop offset="1" stop-color="#3ecbff" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="orbM" cx="0.5" cy="0.5" r="0.5">
+    <stop offset="0" stop-color="#3ee8a8" stop-opacity="0.45"/>
+    <stop offset="1" stop-color="#3ee8a8" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="glow" x="-20%" y="-200%" width="140%" height="500%">
+    <feGaussianBlur stdDeviation="14"/>
+  </filter>
+  <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="40"/>
+  </filter>
+  <filter id="tinyglow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="6"/>
+  </filter>
+</defs>
+  <rect width="1280" height="168" rx="24" fill="#0c1024" stroke="#ffffff" stroke-opacity="0.10"/>
+
+  <g transform="translate(36 28)">
+    <text x="0" y="18" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="13" fill="#ff5d73">05ac:1281  recovery</text>
+    <rect y="36" width="500" height="44" rx="12" fill="#05060d" stroke="#ffffff" stroke-opacity="0.08"/>
+    <rect x="12" y="48" width="44" height="20" rx="5" fill="#ffffff" fill-opacity="0.06"/>
+    <text x="34" y="63" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#5b6280">esc</text>
+    <rect x="66" y="50" width="360" height="16" rx="4" fill="#ffffff" fill-opacity="0.04"/>
+    <circle cx="456" cy="58" r="12" fill="#11131c" stroke="#2a2e44" stroke-width="1.4"/>
+    <text x="0" y="106" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#6b7394">dark bar · no camera · no Touch ID</text>
+  </g>
+
+  <g transform="translate(600 70)">
+    <rect x="-18" y="-18" width="36" height="36" rx="18" fill="#8b7cff" fill-opacity="0.18"/>
+    <path d="M -8 0 h 14 m 0 0 l -6 -6 m 6 6 l -6 6" fill="none" stroke="#c5cdff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <g transform="translate(668 28)">
+    <text x="0" y="18" font-family="ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace" font-size="13" fill="#3ee8a8">05ac:8600  alive</text>
+    <rect y="36" width="560" height="44" rx="12" fill="#05060d" stroke="#ffffff" stroke-opacity="0.12"/>
+    <rect x="8" y="36" width="560" height="44" rx="12" fill="url(#spectrum)" opacity="0.18"/>
+    <rect x="12" y="48" width="44" height="20" rx="5" fill="#ffffff" fill-opacity="0.10"/>
+    <text x="34" y="63" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#c9d0ea">esc</text>
+    <rect x="66" y="48" width="400" height="20" rx="6" fill="url(#spectrum)"/>
+    <g transform="translate(510 58)">
+      <circle r="16" fill="#3ee8a8" opacity="0.22"/>
+      <circle r="12" fill="#071018" stroke="#3ee8a8" stroke-width="1.5"/>
+      <g transform="translate(0 0)" fill="none" stroke="#3ee8a8" stroke-width="1.2" stroke-linecap="round">
+      <path d="M 0 -1.05 v 3.85"/>
+      <path d="M -3.85 1.05 A 3.85 3.85 0 0 1 3.85 1.05"/>
+      <path d="M -5.95 0.35 A 5.95 5.95 0 0 1 5.95 0.35"/>
+      <path d="M -2.24 1.96 A 2.24 2.24 0 0 1 2.24 1.96"/>
+      <path d="M -4.90 -1.54 A 5.04 5.04 0 0 1 1.26 -5.46"/>
+    </g>
+    </g>
+    <text x="0" y="106" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#b7c0e6">bar lit · handed to t1bridge · enrolment kept</text>
+  </g>
+</svg>
