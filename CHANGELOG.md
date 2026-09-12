@@ -6,6 +6,11 @@ MacBookPro14,3.
 
 ## Unreleased
 
+First full run of the packaged tool on hardware (2026-09-11, MacBookPro14,3, t1bridge 0.1.9 installed,
+EFI/APPLE/EMBEDDEDOS removed beforehand): provision 83 s, personalize 84 s, boot 41 s, stage, handover;
+4 min 8 s total, no reboot, t1bridge took the device back and the existing Touch ID enrolment verified
+without re-enrolling.
+
 Hardware-gate day fixes (2026-09-11, found while running the gate checklist on the 14,3):
 
 - `build.sh` reconfigures a vendor checkout whose Makefile targets another prefix instead of

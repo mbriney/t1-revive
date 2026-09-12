@@ -61,7 +61,7 @@ Touch ID.
 
 | Model | Date | Restore | Touch ID | Tester |
 | :--- | :--- | :---: | :---: | :--- |
-| **MacBookPro14,3** | 2026-09-03 restore · 2026-09-06 Touch ID · 2026-09-07 rehearsals · 2026-09-09 fresh install | 🟢 | 🟢 persists across reboot | @niconistal (maintainer) |
+| **MacBookPro14,3** | 2026-09-03 restore · 2026-09-06 Touch ID · 2026-09-07 rehearsals · 2026-09-09 fresh install · 2026-09-11 `t1-revive regenerate` 4 min 8 s, no reboot | 🟢 | 🟢 persists across reboot; existing enrolment survives regeneration | @niconistal (maintainer) |
 | MacBookPro14,2 | | ⚪ untested | ⚪ untested | *your report here* |
 | MacBookPro13,3 | | ⚪ untested | ⚪ untested | *your report here* |
 | MacBookPro13,2 | | ⚪ untested | ⚪ untested | *your report here* |
