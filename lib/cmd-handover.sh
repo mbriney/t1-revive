@@ -14,7 +14,8 @@ _t1r_lib=${T1R_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)}/
 declare -F run_step >/dev/null 2>&1 || . "$_t1r_lib/steps/common-steps.sh"
 
 cmd_handover() {
-  local dev cfg m sock=/run/t1bridge/touchbar.sock
+  local dev cfg m status sock=/run/t1bridge/touchbar.sock
+  status=
   [ $# -eq 0 ] || die 2 "usage: t1-revive handover"
   require_root
   open_log_once handover
@@ -64,12 +65,18 @@ cmd_handover() {
       for _ in $(seq 1 30); do [ -S "$sock" ] && break; sleep 0.5; done
       if [ -S "$sock" ]; then note "t1bridge hardware socket is up"; else warn "t1bridge hardware socket did not appear within 15 s"; fi
       sleep 3
-      t1bridge status 2>/dev/null | sed 's/^/   /' || true
+      status=$(t1bridge status 2>/dev/null || true)
+      [ -n "$status" ] && printf '%s\n' "$status" | sed 's/^/   /'
     else
       note "(dry) wait up to 15 s for $sock, then: t1bridge status"
     fi
     note "If the Touch Bar is not drawn by t1bridge within ~10 s: full power cycle (the ESP is staged, it comes back)."
-    note "Touch ID needs t1bridge's import and enrolment (see its README; on Omarchy also docs/omarchy.md)."
+    # A machine that already had Touch ID keeps it: the keybag is restored with the device. Only
+    # a machine whose keybag is not ready needs the import + enrolment steps.
+    case "$status" in
+      *"keybag: ready"*) note "Touch ID: the existing enrolment stays valid (keybag ready).";;
+      *) note "Touch ID needs t1bridge's import and enrolment (see its README; on Omarchy also docs/omarchy.md).";;
+    esac
   else
     note "t1bridge's selector module is present but the t1bridge CLI is not; install the t1bridge packages, then check: t1bridge status"
   fi

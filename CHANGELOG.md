@@ -23,6 +23,8 @@ Hardware-gate day fixes (2026-09-11, found while running the gate checklist on t
 - confirmations: the plan is printed and confirmed once, the ESP write once more;
   `--confirm-each` restores a question before every device-touching step; the prompt is a
   distinct block with the Enter/Ctrl-C instruction on its own line
+- after staging the folder is listed once, and the handover prints the import/enrolment hint only
+  when t1bridge reports the keybag as not ready (an existing enrolment survives regeneration)
 - dry runs: the resets are labelled as steps 2/7 and 4/7, the recovery guard does not repeat the
   reset before every step, the stage preview prints once, the firmware download note prints once
 

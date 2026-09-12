@@ -220,9 +220,8 @@ cmd_regenerate() {
     if is_dry; then
       run_step stage _regen_stage_dry "writing the boot files" || _regen_fail stage "staging the ESP failed"
     else
+      # cmd_stage lists the verified folder itself
       run_step stage cmd_stage "writing the boot files" "${stage_args[@]}" || _regen_fail stage "staging the ESP failed"
-      # shellcheck disable=SC2012
-      [ -n "$esp_mnt" ] && ls -la "$esp_mnt/EFI/APPLE/EMBEDDEDOS" 2>/dev/null | sed 's/^/   /'
     fi
   fi
   if [ "$start" -le 7 ]; then
