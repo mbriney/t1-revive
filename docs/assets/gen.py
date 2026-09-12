@@ -78,7 +78,7 @@ def write(name, svg):
 
 
 # --------------------------------------------------------------------------- hero
-hero = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-label="t1-revive: Touch Bar, camera and Touch ID back on a 2016 or 2017 MacBook Pro, from Linux alone">
+hero = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="340" viewBox="0 0 1280 340" role="img" aria-label="t1-revive: Touch Bar, camera and Touch ID back on a 2016 or 2017 MacBook Pro, from Linux alone">
   <defs>
     {DEFS}
     <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
@@ -86,8 +86,8 @@ hero = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" vie
     </pattern>
   </defs>
 
-  <rect width="1280" height="420" rx="32" fill="url(#bg)"/>
-  <rect width="1280" height="420" rx="32" fill="url(#dots)"/>
+  <rect width="1280" height="340" rx="32" fill="url(#bg)"/>
+  <rect width="1280" height="340" rx="32" fill="url(#dots)"/>
   <circle cx="1120" cy="40" r="220" fill="url(#orbV)" filter="url(#soft)"/>
   <circle cx="180" cy="400" r="200" fill="url(#orbC)" filter="url(#soft)"/>
   <circle cx="720" cy="20" r="140" fill="url(#orbM)" opacity="0.7" filter="url(#soft)"/>
@@ -118,32 +118,7 @@ hero = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" vie
     <text x="0" y="110" font-size="14" fill="#8b93c2">one sitting · on mains power</text>
   </g>
 
-  <!-- signature Touch Bar -->
-  <rect x="72" y="338" width="1136" height="28" rx="14" fill="url(#spectrum)" opacity="0.55" filter="url(#glow)"/>
-  <rect x="72" y="334" width="1136" height="36" rx="12" fill="#05060d" stroke="#ffffff" stroke-opacity="0.12"/>
-  <rect x="84" y="342" width="58" height="20" rx="6" fill="#ffffff" fill-opacity="0.10"/>
-  <text x="113" y="357" text-anchor="middle" font-family="{SANS}" font-size="11" fill="#c9d0ea">esc</text>
-  <rect x="152" y="342" width="860" height="20" rx="6" fill="url(#spectrum)"/>
-  <g fill="#05060d" fill-opacity="0.16">
-    <rect x="168" y="346" width="70" height="12" rx="3"/>
-    <rect x="248" y="346" width="110" height="12" rx="3"/>
-    <rect x="368" y="346" width="150" height="12" rx="3"/>
-    <rect x="528" y="346" width="80" height="12" rx="3"/>
-    <rect x="618" y="346" width="92" height="12" rx="3"/>
-    <rect x="720" y="346" width="64" height="12" rx="3"/>
-    <rect x="794" y="346" width="88" height="12" rx="3"/>
-    <rect x="892" y="346" width="100" height="12" rx="3"/>
-  </g>
-  <g>
-    <rect x="1024" y="342" width="36" height="20" rx="5" fill="#3ecbff" fill-opacity="0.9"/>
-    <rect x="1066" y="342" width="36" height="20" rx="5" fill="#ffc46b" fill-opacity="0.9"/>
-    <rect x="1108" y="342" width="36" height="20" rx="5" fill="#ff5d73" fill-opacity="0.9"/>
-  </g>
-  <g transform="translate(1188 352)">
-    <circle r="22" fill="#3ee8a8" opacity="0.22" filter="url(#tinyglow)"/>
-    <circle r="14" fill="#071018" stroke="#3ee8a8" stroke-width="1.6"/>
-    {fingerprint(0, 0, 8, "#3ee8a8", 1.35)}
-  </g>
+  <rect x="0" y="332" width="1280" height="8" fill="url(#spectrum)"/>
 </svg>'''
 write("hero.svg", hero)
 
@@ -157,11 +132,9 @@ def card(x, accent, icon, title, sub):
   </g>'''
 
 
-icon_bar = f'''<g transform="translate(32 70)">
+icon_bar = '''<g transform="translate(32 70)">
     <rect width="150" height="48" rx="12" fill="#05060d" stroke="#ffffff" stroke-opacity="0.12"/>
-    <rect x="8" y="14" width="96" height="20" rx="6" fill="url(#spectrum)"/>
-    <circle cx="126" cy="24" r="11" fill="#071018" stroke="#3ee8a8" stroke-width="1.4"/>
-    {fingerprint(126, 24, 6.5, "#3ee8a8", 1.1)}
+    <rect x="16" y="18" width="118" height="12" rx="6" fill="#3ee8a8" fill-opacity="0.35"/>
   </g>'''
 
 icon_cam = '''<g transform="translate(32 62)">
@@ -180,51 +153,13 @@ icon_id = f'''<g transform="translate(68 98)">
 features = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="248" viewBox="0 0 1280 248" role="img" aria-label="What comes back: the Touch Bar, the camera, and Touch ID">
   <defs>{DEFS}</defs>
   <rect width="1280" height="248" rx="28" fill="#0c1024" stroke="#ffffff" stroke-opacity="0.10"/>
-  {card(8, "#ff5d73", icon_bar, "Touch Bar", "The strip lights. Controls come back.")}
+  {card(8, "#ff5d73", icon_bar, "Touch Bar", "The strip lights. t1bridge drives it.")}
   <line x1="427" y1="28" x2="427" y2="220" stroke="#ffffff" stroke-opacity="0.08"/>
   {card(436, "#3ecbff", icon_cam, "Camera", "The T1’s FaceTime HD is a camera again.")}
   <line x1="855" y1="28" x2="855" y2="220" stroke="#ffffff" stroke-opacity="0.08"/>
   {card(864, "#3ee8a8", icon_id, "Touch ID", "The Secure Enclave does the matching.")}
 </svg>'''
 write("features.svg", features)
-
-
-# --------------------------------------------------------------------------- before / after
-ba = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="168" viewBox="0 0 1280 168" role="img" aria-label="From a dark Touch Bar in recovery to a lit bar at 05ac:8600">
-  <defs>{DEFS}</defs>
-  <rect width="1280" height="168" rx="24" fill="#0c1024" stroke="#ffffff" stroke-opacity="0.10"/>
-
-  <g transform="translate(36 28)">
-    <text x="0" y="18" font-family="{MONO}" font-size="13" fill="#ff5d73">05ac:1281  recovery</text>
-    <rect y="36" width="500" height="44" rx="12" fill="#05060d" stroke="#ffffff" stroke-opacity="0.08"/>
-    <rect x="12" y="48" width="44" height="20" rx="5" fill="#ffffff" fill-opacity="0.06"/>
-    <text x="34" y="63" text-anchor="middle" font-family="{SANS}" font-size="11" fill="#5b6280">esc</text>
-    <rect x="66" y="50" width="360" height="16" rx="4" fill="#ffffff" fill-opacity="0.04"/>
-    <circle cx="456" cy="58" r="12" fill="#11131c" stroke="#2a2e44" stroke-width="1.4"/>
-    <text x="0" y="106" font-family="{SANS}" font-size="14" fill="#6b7394">dark bar · no camera · no Touch ID</text>
-  </g>
-
-  <g transform="translate(600 70)">
-    <rect x="-18" y="-18" width="36" height="36" rx="18" fill="#8b7cff" fill-opacity="0.18"/>
-    <path d="M -8 0 h 14 m 0 0 l -6 -6 m 6 6 l -6 6" fill="none" stroke="#c5cdff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
-
-  <g transform="translate(668 28)">
-    <text x="0" y="18" font-family="{MONO}" font-size="13" fill="#3ee8a8">05ac:8600  alive</text>
-    <rect y="36" width="560" height="44" rx="12" fill="#05060d" stroke="#ffffff" stroke-opacity="0.12"/>
-    <rect x="8" y="36" width="560" height="44" rx="12" fill="url(#spectrum)" opacity="0.18"/>
-    <rect x="12" y="48" width="44" height="20" rx="5" fill="#ffffff" fill-opacity="0.10"/>
-    <text x="34" y="63" text-anchor="middle" font-family="{SANS}" font-size="11" fill="#c9d0ea">esc</text>
-    <rect x="66" y="48" width="400" height="20" rx="6" fill="url(#spectrum)"/>
-    <g transform="translate(510 58)">
-      <circle r="16" fill="#3ee8a8" opacity="0.22"/>
-      <circle r="12" fill="#071018" stroke="#3ee8a8" stroke-width="1.5"/>
-      {fingerprint(0, 0, 7, "#3ee8a8", 1.2)}
-    </g>
-    <text x="0" y="106" font-family="{SANS}" font-size="14" fill="#b7c0e6">bar lit · handed to t1bridge · enrolment kept</text>
-  </g>
-</svg>'''
-write("before-after.svg", ba)
 
 
 # --------------------------------------------------------------------------- flow

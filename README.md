@@ -58,11 +58,11 @@ Touch ID.
 >   including from a fresh install. That is evidence, not coverage.
 > - The tool never calls the ACPI method `SOCW`. The only T1 reset it uses is `FRST`.
 
-<img src="docs/assets/hardware.jpg" alt="A space-gray Touch Bar MacBook Pro with the strip lit and Touch ID glowing, the kind of machine t1-revive is for" width="100%">
+<img src="docs/assets/hardware.jpg" alt="The real T1Bridge Touch Bar after regenerate: Escape, brightness, keyboard backlight, and media keys" width="100%">
 
-<p align="center"><sub>The 2016/2017 Touch Bar MacBook Pro. The strip is the T1. This tool brings it back.</sub></p>
+<p align="center"><sub>T1Bridge’s built-in renderer on this MacBookPro14,3, after <code>t1-revive regenerate</code>.</sub></p>
 
-<img src="docs/assets/before-after.svg" alt="From a dark Touch Bar in recovery (05ac:1281) to a lit bar at 05ac:8600" width="100%">
+<img src="docs/assets/before-after.jpg" alt="Dark Touch Bar in recovery, then the same machine with T1Bridge’s built-in renderer lit" width="100%">
 
 <img src="docs/assets/features.svg" alt="What comes back: Touch Bar, camera, and Touch ID" width="100%">
 

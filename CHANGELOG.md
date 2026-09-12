@@ -7,6 +7,7 @@ MacBookPro14,3.
 ## Unreleased
 
 README visual identity: logo, hero, before/after, feature cards, terminal mockup and flow strip.
+The Touch Bar pictures are a real T1Bridge renderer on the tested 14,3, not a mock UI.
 
 First full run of the packaged tool on hardware (2026-09-11, MacBookPro14,3, t1bridge 0.1.9 installed,
 EFI/APPLE/EMBEDDEDOS removed beforehand): provision 83 s, personalize 84 s, boot 41 s, stage, handover;
