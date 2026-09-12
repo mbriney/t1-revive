@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="docs/assets/logo.png" width="128" alt="t1-revive mark: a glowing Touch Bar and Touch ID">
-
 <img src="docs/assets/hero.svg" alt="t1-revive: Touch Bar, camera and Touch ID back on a 2016 or 2017 MacBook Pro, from Linux alone" width="100%">
 
 **Regenerates the Apple T1 firmware data of a 2016 or 2017 Touch Bar MacBook Pro, from Linux alone.**
