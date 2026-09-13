@@ -14,6 +14,12 @@ EFI/APPLE/EMBEDDEDOS removed beforehand): provision 83 s, personalize 84 s, boot
 4 min 8 s total, no reboot, t1bridge took the device back and the existing Touch ID enrolment verified
 without re-enrolling.
 
+Persistence of that run (checked 2026-09-13, after four full power cycles on 2026-09-12): the T1
+enumerates in configuration 2 at boot, `t1bridge status` reports every line ready (keybag, broker,
+touchbar), and the regenerated `EMBEDDEDOS` folder compared against the copy set aside before the
+run gives `FDRData` and `version.plist` byte-identical and `combined.memboot` different, as expected
+from fresh nonces and a fresh ticket.
+
 Hardware-gate day fixes (2026-09-11, found while running the gate checklist on the 14,3):
 
 - `build.sh` reconfigures a vendor checkout whose Makefile targets another prefix instead of
