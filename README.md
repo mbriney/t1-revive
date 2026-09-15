@@ -260,9 +260,9 @@ to the original repositories and the copies go away.
 
 | Component | Upstream base | Patched copy | Upstream status |
 | :--- | :---: | :--- | :--- |
-| idevicerestore | `540c352` | [niconistal/idevicerestore-t1](https://github.com/niconistal/idevicerestore-t1) branch `t1` | offer to be filed (issue first, per their contributing guide) |
-| libirecovery | `95dec3a` | [niconistal/libirecovery-t1](https://github.com/niconistal/libirecovery-t1) branch `t1` | same |
-| usbmuxd | `3ded00c` | [niconistal/usbmuxd-t1](https://github.com/niconistal/usbmuxd-t1) branch `t1` | same |
+| idevicerestore | `540c352` | [niconistal/idevicerestore-t1](https://github.com/niconistal/idevicerestore-t1) branch `t1` | offered in [idevicerestore#800](https://github.com/libimobiledevice/idevicerestore/issues/800) (ticket first, per their contributing guide) |
+| libirecovery | `95dec3a` | [niconistal/libirecovery-t1](https://github.com/niconistal/libirecovery-t1) branch `t1` | PR [libirecovery#167](https://github.com/libimobiledevice/libirecovery/pull/167) open |
+| usbmuxd | `3ded00c` | [niconistal/usbmuxd-t1](https://github.com/niconistal/usbmuxd-t1) branch `t1` | PR [usbmuxd#284](https://github.com/libimobiledevice/usbmuxd/pull/284) open |
 
 Related contributions to the projects around this tool:
 
