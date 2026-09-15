@@ -51,9 +51,9 @@ done
 
 _ref() { local v=${1^^}; v=${v//-/_}_$2; printf '%s' "${!v-}"; }
 
-# The project tarball. 'SKIP' until the release tag exists; run `updpkgsums` at tagging time.
+# The project tarball for tag v$_relver (sha256 of the GitHub archive); update at every tag.
 source=("$_srcdir.tar.gz::$url/archive/refs/tags/v$_relver.tar.gz")
-sha256sums=('SKIP')
+sha256sums=('50b7f7b862af56e2930d2c1b641da5b8539bf97ed9614809cffff5eb1fbb9872')
 # One upstream commit tarball per vendored component, so build() never touches the network.
 for _c in $T1R_VENDOR_ORDER; do
 	source+=("$_c-$(_ref "$_c" BASE_COMMIT).tar.gz::$(_ref "$_c" UPSTREAM_URL)/archive/$(_ref "$_c" BASE_COMMIT).tar.gz")
