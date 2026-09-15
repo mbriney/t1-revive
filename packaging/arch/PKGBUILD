@@ -14,9 +14,9 @@
 # (see README.md in this directory); prepare() verifies it against the release tarball.
 
 pkgname=t1-revive
-# VERSION says 0.1.0-dev; pkgver may not contain '-'.
-_relver=0.1.0-dev
-pkgver=0.1.0.dev
+# _relver is the git tag without its v and must equal VERSION; pkgver may not contain '-'.
+_relver=0.1.0
+pkgver=0.1.0
 pkgrel=1
 pkgdesc="Regenerate the Apple T1 (iBridge) firmware data of a Touch Bar MacBook Pro from Linux"
 arch=('x86_64')

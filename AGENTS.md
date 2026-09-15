@@ -165,10 +165,8 @@ findings (no device names beyond /dev/…), the last 200 diagnostic lines, packa
 
 ## Source material (read-only, outside this repo)
 
-The proven scripts live in `~/Work/t1-touchbar` (private notebook repo): `one-shot.sh`,
-`pass-a.sh`, `pass-b.sh`, `phase14.sh`, `stage-esp.sh`, `frst-test.sh`, `regen-preflight.sh`,
-`rehearsal-wipe.sh`, `toolkit-go.sh`, `make-toolkit.sh`, `make-install-stick.sh`, `build.sh`,
-`stick/`, `tools/*.py`, `patches/libimobiledevice/`, `RESUME-NOTES.md`, `HANDOFF.md`,
-`post/site/*.html` (article, FAQ, runbook, testers). t1bridge's repo layout and tone
-(`~/Work/t1-touchbar/ref-t1bridge`) is the reference for docs quality.
-Never copy from `logs/`, `/var/lib/t1-touchbar`, `/var/lib/t1bridge`, or the ESP.
+The tool was derived from the maintainer's private notebook scripts and logs, which are not
+published; this repository and its tests are the source of truth. t1bridge's repo layout and
+tone is the reference for docs quality.
+Never copy from a machine's state directories (`/var/lib/t1bridge`, the tool's own state
+directory) or from the ESP into the repo.

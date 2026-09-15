@@ -4,7 +4,9 @@ Dates are the days the work was proven on hardware, taken from the maintainer's 
 engineering notebook. Everything before the first public version happened on one
 MacBookPro14,3.
 
-## Unreleased
+## 0.1.0 (2026-09-14)
+
+First public version.
 
 README visual identity: logo, hero, before/after, feature cards, terminal mockup and flow strip.
 The Touch Bar pictures are a real T1Bridge renderer on the tested 14,3, not a mock UI.
