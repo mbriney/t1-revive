@@ -73,7 +73,7 @@ Touch ID.
 | Model | Date | Restore | Touch ID | Tester |
 | :--- | :--- | :---: | :---: | :--- |
 | **MacBookPro14,3** | 2026-09-03 restore · 2026-09-06 Touch ID · 2026-09-07 rehearsals · 2026-09-09 fresh install · 2026-09-11 `t1-revive regenerate` 4 min 8 s, no reboot · 2026-09-12 four power cycles later: still ready, FDRData byte-identical to the pre-run copy · 2026-09-14 two more runs from a removed EMBEDDEDOS, 4 min 2 s each, enrolment kept | 🟢 | 🟢 persists across reboot; existing enrolment survives regeneration | @niconistal (maintainer) |
-| MacBookPro14,2 | 2026-09-15 intact-ESP control: `status` and `report` on a Mac that dual-boots macOS, firmware intact, T1 booted; found the two-ESP defects fixed in 0.1.1 (issue #2). Regeneration deliberately not run | ⚪ untested | ⚪ untested (Touch ID via t1bridge 0.1.9 confirmed on that machine, independently of this tool) | @bjhinkle |
+| MacBookPro14,2 | 2026-09-15 intact-ESP control: `status` and `report` on a Mac that dual-boots macOS, firmware intact, T1 booted; found the two-ESP defects fixed in 0.1.1 (issue #2) · 2026-09-16 confirmed 0.1.1 on that layout: Apple's ESP chosen by the `EFI/APPLE` rule, nothing left mounted, the partition byte-identical before and after. Regeneration deliberately not run | ⚪ not run | ⚪ not run (Touch ID was confirmed on that machine during a t1bridge trial that was later rolled back) | @bjhinkle |
 | MacBookPro13,3 | | ⚪ untested | ⚪ untested | *your report here* |
 | MacBookPro13,2 | | ⚪ untested | ⚪ untested | *your report here* |
 

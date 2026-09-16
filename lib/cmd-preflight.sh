@@ -28,7 +28,7 @@ _pf_tcp() {  # _pf_tcp HOST PORT: name resolution + TCP connect only (Apple's en
 }
 
 cmd_preflight() {
-  local local_only=0 do_install=0 a is_root=0 model status t1 cfg esp dev mp mounted=
+  local local_only=0 do_install=0 a is_root=0 model status t1 cfg esp dev mp cands ncand own=0 mounted=
   for a in "$@"; do
     case "$a" in
       --local) local_only=1;;
@@ -129,17 +129,23 @@ cmd_preflight() {
   fi
 
   pf_head "EFI system partition"
+  # One look at the candidates for the whole section: every call probes the unmounted ones
+  # through a read-only mount, and this section used to ask four times.
+  cands=$(esp_candidates); ncand=$(printf '%s\n' "$cands" | grep -c .)
   if esp=$(esp_select); then
     read -r dev mp <<<"$esp"
-    out=$(esp_candidates | wc -l)
-    if [[ "$out" -gt 1 ]]; then
-      note "$out EFI system partitions; $dev chosen: $(esp_select --why)"
-      esp_candidates | awk -v d="$dev" '$1 != d {printf "  not chosen: %s (mounted: %s, EFI/APPLE: %s)\n", $1, $2, $3}' | while IFS= read -r out; do note "$out"; done
+    if [[ "$ncand" -gt 1 ]]; then
+      note "$ncand EFI system partitions; $dev chosen: $(esp_select --why)"
+      printf '%s\n' "$cands" | awk -v d="$dev" '$1 != d {printf "  not chosen: %s (mounted: %s, EFI/APPLE: %s)\n", $1, $2, $3}' | while IFS= read -r out; do note "$out"; done
     fi
     if [[ "$mp" != "-" ]]; then mounted=$mp
-    elif [[ "$is_root" = 1 ]] && [[ "$T1R_DRY_RUN" != 1 ]]; then mounted=$(esp_mount "$dev" 2>/dev/null || true); fi
+    elif [[ "$is_root" = 1 ]] && [[ "$T1R_DRY_RUN" != 1 ]]; then
+      # preflight only reads; the mount it makes itself is read-only and released at exit
+      mounted=$(esp_mount "$dev" ro 2>/dev/null || true); own=1
+    fi
     if [[ -n "$mounted" ]]; then
-      if [[ "$is_root" = 1 ]]; then
+      if [[ "$own" = 1 ]]; then pf_ok "ESP $dev mounts (vfat); looked at read-only, stage mounts it read-write under $T1R_STATE/esp"
+      elif [[ "$is_root" = 1 ]]; then
         if esp_is_writable "$mounted"; then pf_ok "ESP $dev mounted rw (vfat) at $mounted"; else pf_no "ESP $dev at $mounted is not a writable vfat mount"; fi
       else pf_ok "ESP $dev at $mounted (writability needs root)"; fi
       if [[ -d "$mounted/EFI/APPLE/EMBEDDEDOS" ]]; then
@@ -148,7 +154,7 @@ cmd_preflight() {
       elif [[ -d "$mounted/EFI/APPLE" ]]; then
         pf_ok "EFI/APPLE present but no EMBEDDEDOS folder (partially wiped); 't1-revive backup' saves what is left"
       elif [[ "$is_root" = 1 ]] || [[ -r "$mounted" ]]; then
-        if [[ "$(esp_candidates | wc -l)" -gt 1 ]]; then
+        if [[ "$ncand" -gt 1 ]]; then
           pf_ok "no EFI/APPLE on $dev; the other EFI system partition(s) listed above hold none either (or could not be looked at): a wiped ESP"
         else pf_ok "no EFI/APPLE on the ESP (a wiped ESP, as expected); nothing to back up"; fi
       else
@@ -162,9 +168,8 @@ cmd_preflight() {
       pf_ok "ESP $dev found (not mounted; stage mounts it under $T1R_STATE/esp)"
     fi
   else
-    out=$(esp_candidates | wc -l)
-    if [[ "$out" = 0 ]]; then pf_no "no EFI system partition found (partition type $T1R_ESP_PARTTYPE)"
-    else pf_no "$out EFI system partitions and none stands out (exactly one internal one with EFI/APPLE, else exactly one mounted at /boot or /efi): $(esp_candidates | awk '{printf "%s@%s(EFI/APPLE:%s) ", $1, $2, $3}'); pin one with T1R_ESP_DEV in $T1R_CONF/t1-revive.conf"; fi
+    if [[ "$ncand" = 0 ]]; then pf_no "no EFI system partition found (partition type $T1R_ESP_PARTTYPE)"
+    else pf_no "$ncand EFI system partitions and none stands out (exactly one internal one with EFI/APPLE, else exactly one mounted at /boot or /efi): $(printf '%s\n' "$cands" | awk '{printf "%s@%s(EFI/APPLE:%s) ", $1, $2, $3}'); pin one with T1R_ESP_DEV in $T1R_CONF/t1-revive.conf"; fi
   fi
 
   pf_head "T1 reset method"

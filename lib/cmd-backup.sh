@@ -30,8 +30,11 @@ cmd_backup() {
 
   esp=$(esp_select) || die 4 "no single EFI system partition found (t1-revive preflight lists the candidates)"
   read -r dev mp <<<"$esp"
-  mp=$(esp_mount "$dev") || die 1 "cannot mount the ESP $dev"
-  note "ESP: $dev at $mp"
+  # Read-only when the tool mounts it itself: a backup reads, and Apple's ESP on a dual-boot
+  # Mac is the partition this command exists to protect.
+  mp=$(esp_mount "$dev" ro) || die 1 "cannot mount the ESP $dev"
+  if [[ "$mp" = "$T1R_STATE/esp" ]]; then note "ESP: $dev at $mp (mounted read-only for the backup)"
+  else note "ESP: $dev at $mp"; fi
 
   if [[ -d "$mp/EFI/APPLE" ]]; then apple=1
   elif [[ "$T1R_DRY_RUN" = 1 ]] && facts=$(esp_probe "$dev" 2>/dev/null) && [[ "${facts%% *}" = yes ]]; then

@@ -213,6 +213,66 @@ STUB
   assert_contains "$(cat "$T1R_TMP/mount.log")" "umount $T1R_STATE/esp"
 }
 
+@test "esp_probe: a failing unmount warns with the commands to run and keeps the directory" {
+  t1r_stub_mount; t1r_stub_apple_data; t1r_load discover; t1r_need esp_probe
+  printf '#!/usr/bin/env bash\nexit 1\n' >"$T1R_TMP/bin/umount"
+  run esp_probe /dev/sdz1
+  assert_status 0
+  assert_contains "$output" "run: umount $T1R_TMP/t1-revive-probe."
+  [[ -n "$(find "$T1R_TMP" -maxdepth 1 -name 't1-revive-probe.*')" ]] || { echo "the probe directory was removed while something may be mounted on it" >&2; return 1; }
+}
+
+@test "esp_select --why: as a normal user the /boot fallback is provisional (issue #2)" {
+  # Without root the unmounted ESP stays '?', so the /boot rule wins by default; the why-line
+  # must say so instead of stating the /boot reason as a fact.
+  t1r_use_lsblk two-esp-boot; t1r_load discover; t1r_need esp_select
+  export T1R_ESP_PROBE=0
+  run esp_select --why
+  assert_status 0
+  assert_contains "$output" "mounted at /boot"
+  # the real /boot is usually mode 0700, so as a normal user it counts as unlooked-at too
+  [[ "$output" =~ provisional:\ [12]\ EFI\ system\ partition\(s\)\ could\ not\ be\ looked\ inside ]] || { echo "not marked provisional: $output" >&2; return 1; }
+  [[ "${EUID:-$(id -u)}" = 0 ]] || assert_contains "$output" "run as root to be sure"
+}
+
+@test "esp_select --why: the /boot fallback is definite once every ESP was looked inside" {
+  # the fixture's mounted ESP is the real /boot; this user must be able to look inside it
+  [[ -r /boot ]] && [[ -x /boot ]] || skip "/boot is not readable as this user"
+  t1r_stub_mount; t1r_use_lsblk two-esp-boot; t1r_load discover; t1r_need esp_select
+  run esp_select --why
+  assert_status 0
+  assert_contains "$output" "mounted at /boot, and no EFI system partition is known to hold EFI/APPLE"
+  refute_contains "$output" "provisional"
+}
+
+# findmnt as esp_mount sees it: nothing is mounted anywhere, and whatever the tool mounted is vfat.
+esp_stub_findmnt() {
+  t1r_stub_bin findmnt <<'STUB'
+#!/usr/bin/env bash
+case "$*" in *FSTYPE*) echo vfat;; *) exit 1;; esac
+STUB
+}
+
+@test "esp_mount: 'ro' mounts read-only with nosuid,nodev,noexec under the state directory (issue #2)" {
+  t1r_stub_mount; t1r_stub_apple_data; t1r_use_lsblk one-esp; t1r_load discover; t1r_need esp_mount
+  esp_stub_findmnt
+  export T1R_DRY_RUN=0
+  run esp_mount /dev/sdz1 ro
+  assert_status 0
+  assert_eq "$T1R_STATE/esp" "$output"
+  assert_contains "$(cat "$T1R_TMP/mount.log")" "mount -t vfat -o ro,nosuid,nodev,noexec /dev/sdz1 $T1R_STATE/esp"
+  [[ -f $T1R_STATE/esp/EFI/APPLE/EMBEDDEDOS/FDRData ]]
+}
+
+@test "esp_mount: without 'ro' the mount is read-write (stage writes to it)" {
+  t1r_stub_mount; t1r_use_lsblk one-esp; t1r_load discover; t1r_need esp_mount
+  esp_stub_findmnt
+  export T1R_DRY_RUN=0
+  run esp_mount /dev/sdz1
+  assert_status 0
+  assert_contains "$(cat "$T1R_TMP/mount.log")" "mount -t vfat /dev/sdz1 $T1R_STATE/esp"
+}
+
 @test "esp_select: no ESP -> returns 1" {
   t1r_use_lsblk no-esp; t1r_load discover; t1r_need esp_select
   run esp_select

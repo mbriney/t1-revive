@@ -106,8 +106,14 @@ esp_with_ro_mount() {
     return 1
   fi
   "$@" "$mp"; rc=$?
-  umount "$mp" 2>/dev/null || warn "could not unmount the read-only probe of $dev at $mp"
-  rmdir "$mp" 2>/dev/null || true
+  # A read-only probe that will not unmount (a stray open file) is detached lazily; the
+  # directory is removed only once nothing is mounted on it, so a failure never hides a
+  # mounted ESP behind a warning that only spoke of the directory.
+  if umount "$mp" 2>/dev/null || umount -l "$mp" 2>/dev/null; then
+    rmdir "$mp" 2>/dev/null || true
+  else
+    warn "could not unmount the read-only probe of $dev; run: umount $mp && rmdir $mp"
+  fi
   return "$rc"
 }
 
@@ -145,7 +151,7 @@ esp_candidates() {
 # bootloader.
 esp_select() {
   local -a lines=()
-  local why=0 l n dev mp has pick='' apple=0 std=0
+  local why=0 l n dev mp has pick='' apple=0 std=0 unknown=0
   [[ "${1:-}" = --why ]] && why=1
   mapfile -t lines < <(esp_candidates)
   if [[ -n "${T1R_ESP_DEV:-}" ]]; then
@@ -177,10 +183,22 @@ esp_select() {
   pick=
   for l in "${lines[@]}"; do
     read -r dev mp has <<<"$l"
+    [[ "$has" = '?' ]] && unknown=$((unknown + 1))
     case "$mp" in /boot|/efi|/boot/efi) std=$((std + 1)); pick="$dev $mp";; *) ;; esac
   done
   if [[ "$std" = 1 ]]; then
-    [[ "$why" = 1 ]] && { printf 'mounted at %s, and no EFI system partition is known to hold EFI/APPLE\n' "${pick#* }"; return 0; }
+    if [[ "$why" = 1 ]]; then
+      # The /boot rule only applies when no ESP is known to hold EFI/APPLE. An ESP nobody
+      # could look inside (unmounted, and no root to probe it) may well be Apple's, so the
+      # choice is provisional until every candidate has been looked at.
+      if [[ "$unknown" -gt 0 ]]; then
+        printf 'mounted at %s; provisional: %d EFI system partition(s) could not be looked inside' "${pick#* }" "$unknown"
+        if [[ "${EUID:-$(id -u)}" = 0 ]]; then printf '\n'; else printf ', run as root to be sure\n'; fi
+      else
+        printf 'mounted at %s, and no EFI system partition is known to hold EFI/APPLE\n' "${pick#* }"
+      fi
+      return 0
+    fi
     printf '%s\n' "$pick"; return 0
   fi
   return 1
@@ -194,9 +212,12 @@ esp_removable() {
   [[ "$(cat "${T1R_SYSFS:-/sys}/block/$disk/removable" 2>/dev/null)" = 1 ]]
 }
 
-# esp_mount DEVICE: prints the mountpoint, mounting under $T1R_STATE/esp when needed.
+# esp_mount DEVICE [ro]: prints the mountpoint, mounting under $T1R_STATE/esp when needed.
+# With "ro" a mount the tool makes itself is read-only (ro,nosuid,nodev,noexec): backup and
+# preflight only ever read, so they cannot write to the partition they exist to protect. An
+# ESP that is already mounted is used as it is, whatever the mode.
 esp_mount() {
-  local dev=${1:?esp_mount DEVICE} mp='' l d m
+  local dev=${1:?esp_mount DEVICE} mode=${2:-rw} mp='' l d m
   while read -r d m _; do [[ "$d" = "$dev" ]] && mp=$m; done < <(esp_candidates)
   if { [[ -z "$mp" ]] || [[ "$mp" = "-" ]]; } && command -v findmnt >/dev/null 2>&1; then
     mp=$(findmnt -rno TARGET "$dev" 2>/dev/null | head -1)
@@ -205,7 +226,8 @@ esp_mount() {
   mp=$T1R_STATE/esp
   if [[ "$T1R_DRY_RUN" = 1 ]]; then note "(dry-run) mount $dev $mp"; printf '%s\n' "$mp"; return 0; fi
   install -d -m 0700 "$mp" || return 1
-  mount -t vfat "$dev" "$mp" || return 1
+  if [[ "$mode" = ro ]]; then mount -t vfat -o ro,nosuid,nodev,noexec "$dev" "$mp" || return 1
+  else mount -t vfat "$dev" "$mp" || return 1; fi
   l=$(findmnt -rno FSTYPE "$mp" 2>/dev/null); [[ "$l" = vfat ]] || { umount "$mp" 2>/dev/null; return 1; }
   T1R_ESP_MOUNTED=$mp; export T1R_ESP_MOUNTED   # esp_release unmounts it at exit
   printf '%s\n' "$mp"

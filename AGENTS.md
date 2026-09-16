@@ -152,7 +152,9 @@ esp_with_ro_mount DEV CMD [ARG...]
                          CMD ARG... MOUNTPOINT, unmounts and removes the dir; returns 1 without running
                          anything when T1R_ESP_PROBE forbids it or the mount fails
 esp_probe DEVICE         esp_apple_facts through esp_with_ro_mount
-esp_mount DEVICE         mounts under $T1R_STATE/esp if not mounted; prints mountpoint
+esp_mount DEVICE [ro]    mounts under $T1R_STATE/esp if not mounted; prints mountpoint. "ro":
+                         ro,nosuid,nodev,noexec (backup, preflight); an ESP already mounted is
+                         used as it is. esp_release (from log_close) unmounts at exit
 frst_method              prints the full ACPI path of the T1 reset method (e.g.
                          \_SB.PCI0.XHC1.RHUB.ASOC.FRST) discovered from the ACPI tables in
                          $T1R_ACPI_TABLES; empty if not found, and empty (refuse, never guess)

@@ -139,6 +139,24 @@ backup_load() {
   assert_eq "" "$(find "$T1R_STATE" -maxdepth 1 -name 'efi-backup-*' || true)"
 }
 
+@test "backup: an ESP the tool mounts itself is mounted read-only (issue #2)" {
+  # Apple's ESP on a dual-boot Mac is unmounted under Linux. backup only reads it, and it is
+  # the partition this command exists to protect, so the mount it makes must not be writable.
+  export T1R_DRY_RUN=0
+  t1r_stub_mount; t1r_stub_apple_data; t1r_use_lsblk one-esp; backup_load
+  t1r_stub_bin findmnt <<'STUB'
+#!/usr/bin/env bash
+case "$*" in *FSTYPE*) echo vfat;; *) exit 1;; esac
+STUB
+  run cmd_backup
+  assert_status 0
+  assert_contains "$output" "mounted read-only for the backup"
+  assert_contains "$output" "contains FDRData: yes"
+  assert_contains "$(cat "$T1R_TMP/mount.log")" "mount -t vfat -o ro,nosuid,nodev,noexec /dev/sdz1 $T1R_STATE/esp"
+  refute_contains "$(cat "$T1R_TMP/mount.log")" "mount -t vfat /dev/sdz1"
+  [[ -n "$(find "$T1R_STATE" -maxdepth 1 -name 'efi-backup-*.tar')" ]] || { echo "no tar written" >&2; return 1; }
+}
+
 # --- the dry run ------------------------------------------------------------------------------
 @test "backup: a dry run says what it would do and writes no tar" {
   t1r_fake_esp; t1r_esp_apple_data; t1r_esp_snapshot; backup_load
