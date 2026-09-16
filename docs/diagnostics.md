@@ -76,7 +76,7 @@ diagnostic line. The sections, in order:
 | `state` | whether the private state directory exists, the names of step markers, the number of EFI backups |
 | `packages` | versions of the kernel, headers, `acpi_call-dkms`, `dkms`, t1bridge and its fingerprint packages |
 | `t1bridge` | the first 30 lines of `t1bridge status` when installed and running as root |
-| `diagnostics` | the last 200 diagnostic lines from the log directory and from the journal, each source counted |
+| `diagnostics` | the last 200 diagnostic lines from the log directory and from the journal, each source counted. The log lines come from `diagnostics.log`, the aggregate every command appends to, in the order they were written (`diag-log-source: diagnostics.log`); the per-command logs are read instead, oldest first, only when the aggregate is absent or with `--since`, which selects whole files by age (`diag-log-source: per-command-logs`). The two are never combined, so a line is counted once |
 | `end` | marker, followed by the checksum line |
 
 The last line is `report-sha256: <hex>`, the SHA-256 of every line above it. Someone reading

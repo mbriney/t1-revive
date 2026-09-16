@@ -268,9 +268,20 @@ report_section_t1bridge() {
   done < <(t1bridge status 2>&1 | head -n 30)
 }
 
-# diagnostic lines from the redacted log directory
+# diagnostic lines from the redacted log directory.
+#
+# diag() writes every line twice: to the per-command log (<cmd>-<stamp>.log) and to the
+# aggregate diagnostics.log, the complete, chronological copy. The default path reads the
+# aggregate alone. Globbing '*.log' used to read both, so every line was counted twice and the
+# merged stream came out in filename order (backup < diagnostics < preflight < regenerate)
+# rather than in the order the commands ran; a bundle then showed a second, identical
+# regeneration that never happened (issue #6). The per-command logs are the fallback when the
+# aggregate is absent and the source for --since, which selects whole files by mtime (the
+# aggregate's mtime says nothing about the age of the lines inside it); the aggregate is
+# excluded from both so the two sources are never combined.
 report_diag_from_logs() {
-  local logdir="${T1R_LOG:-/var/log/t1-revive}" since="${1:-}"
+  local logdir="${T1R_LOG:-/var/log/t1-revive}" since="${1:-}" aggregate source
+  aggregate=$logdir/diagnostics.log
   if [ ! -d "$logdir" ]; then
     report_kv diag-log absent
     return
@@ -281,9 +292,14 @@ report_diag_from_logs() {
   fi
   local -a files=()
   if [ -n "$since" ]; then
-    mapfile -t files < <(find "$logdir" -maxdepth 1 -type f -name '*.log' -mmin "-$since" 2>/dev/null | sort)
+    mapfile -t files < <(report_diag_cmd_logs "$logdir" -mmin "-$since")
+    source=per-command-logs
+  elif [ -f "$aggregate" ] && [ -r "$aggregate" ]; then
+    files=("$aggregate")
+    source=diagnostics.log
   else
-    mapfile -t files < <(find "$logdir" -maxdepth 1 -type f -name '*.log' 2>/dev/null | sort)
+    mapfile -t files < <(report_diag_cmd_logs "$logdir")
+    source=per-command-logs
   fi
   if [ "${#files[@]}" -eq 0 ]; then
     report_kv diag-log none
@@ -291,8 +307,18 @@ report_diag_from_logs() {
   fi
   local out
   out=$(grep -h '^t1-revive-diagnostic v=1 ' -- "${files[@]}" 2>/dev/null | tail -n 200)
+  report_kv diag-log-source "$source"
   report_kv diag-log "$(printf '%s\n' "$out" | grep -c '^t1-revive-diagnostic ')"
   [ -n "$out" ] && printf '%s\n' "$out"
+}
+
+# report_diag_cmd_logs LOGDIR [FIND-TEST...]: the per-command logs, oldest first by mtime,
+# never the aggregate. Log names carry no spaces (<cmd>-<stamp>.log).
+report_diag_cmd_logs() {
+  local logdir=$1
+  shift
+  find "$logdir" -maxdepth 1 -type f -name '*.log' ! -name diagnostics.log "$@" \
+       -printf '%T@ %p\n' 2>/dev/null | sort -n | cut -d' ' -f2-
 }
 
 # diagnostic lines from the journal (logger -t t1-revive)

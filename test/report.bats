@@ -190,6 +190,67 @@ STUB
   refute_contains "$output" "a human-readable log line"
 }
 
+# --- the diagnostic lines (issue #6) ----------------------------------------------------------
+# diag() writes every line to the per-command log and to the aggregate diagnostics.log. The
+# bundle must read one source, never both, and must keep the order the commands ran in.
+diag_line() { printf 't1-revive-diagnostic v=1 component=%s step=%s result=ok %s\n' "$@"; }
+
+@test "report: a diagnostic line is counted once, from the aggregate log (issue #6)" {
+  report_load
+  diag_line backup backup 'apple=present files=1' >"$T1R_LOG/backup-20260101-000100.log"
+  diag_line regenerate provision 'elapsed=116' >"$T1R_LOG/regenerate-20260101-000200.log"
+  cat "$T1R_LOG/backup-20260101-000100.log" "$T1R_LOG/regenerate-20260101-000200.log" >"$T1R_LOG/diagnostics.log"
+  t1r_run cmd_report
+  assert_status 0
+  assert_contains "$output" "diag-log-source: diagnostics.log"
+  assert_contains "$output" "diag-log: 2"
+  assert_eq 1 "$(printf '%s\n' "$output" | grep -c 'step=provision result=ok elapsed=116')" "the regeneration line appears once"
+}
+
+@test "report: the diagnostic lines keep the order the commands ran in, not filename order (issue #6)" {
+  report_load
+  # regenerate ran first, backup second; 'backup-*' sorts before 'regenerate-*' by name
+  diag_line regenerate chain '' >"$T1R_LOG/regenerate-20260101-000100.log"
+  diag_line backup backup 'apple=present files=1' >"$T1R_LOG/backup-20260101-000200.log"
+  cat "$T1R_LOG/regenerate-20260101-000100.log" "$T1R_LOG/backup-20260101-000200.log" >"$T1R_LOG/diagnostics.log"
+  t1r_run cmd_report
+  assert_status 0
+  local first second
+  first=$(printf '%s\n' "$output" | grep -n 'component=regenerate step=chain' | head -1 | cut -d: -f1)
+  second=$(printf '%s\n' "$output" | grep -n 'component=backup step=backup' | head -1 | cut -d: -f1)
+  [[ $first -lt $second ]] || { echo "regenerate ($first) must come before backup ($second)" >&2; return 1; }
+}
+
+@test "report: --since reads the per-command logs by age and never the aggregate (issue #6)" {
+  report_load
+  diag_line backup backup 'apple=present files=1' >"$T1R_LOG/backup-20260101-000100.log"
+  diag_line regenerate chain '' >"$T1R_LOG/regenerate-20260101-000200.log"
+  cat "$T1R_LOG/backup-20260101-000100.log" "$T1R_LOG/regenerate-20260101-000200.log" >"$T1R_LOG/diagnostics.log"
+  touch -d '3 hours ago' "$T1R_LOG/backup-20260101-000100.log"
+  t1r_run cmd_report --since 60
+  assert_status 0
+  assert_contains "$output" "diag-log-source: per-command-logs"
+  assert_contains "$output" "diag-log: 1"
+  assert_contains "$output" "component=regenerate step=chain"
+  refute_contains "$output" "component=backup step=backup"
+}
+
+@test "report: without an aggregate the per-command logs are read, oldest first (issue #6)" {
+  report_load
+  diag_line regenerate chain '' >"$T1R_LOG/regenerate-20260101-000100.log"
+  diag_line backup backup 'apple=present files=1' >"$T1R_LOG/backup-20260101-000200.log"
+  touch -d '2 hours ago' "$T1R_LOG/regenerate-20260101-000100.log"
+  touch -d '1 hour ago' "$T1R_LOG/backup-20260101-000200.log"
+  t1r_run cmd_report
+  assert_status 0
+  assert_contains "$output" "diag-log-source: per-command-logs"
+  assert_contains "$output" "diag-log: 2"
+  local first second
+  first=$(printf '%s\n' "$output" | grep -n 'component=regenerate step=chain' | head -1 | cut -d: -f1)
+  second=$(printf '%s\n' "$output" | grep -n 'component=backup step=backup' | head -1 | cut -d: -f1)
+  [[ $first -lt $second ]] || { echo "regenerate ($first) must come before backup ($second)" >&2; return 1; }
+}
+
 # --- options ----------------------------------------------------------------------------------
 @test "report: --since with a non-numeric value exits 2" {
   report_load
