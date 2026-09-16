@@ -108,7 +108,6 @@ check() {
 
 package() {
 	local _root="$pkgdir/usr/lib/$pkgname"
-	local _runpath="/usr/lib/$pkgname/prefix/lib"
 	cd "$srcdir/$_srcdir"
 
 	# 1. the tool
@@ -124,20 +123,15 @@ package() {
 	# the (all-commented) settings file the backup=() entry refers to
 	install -Dm644 contrib/t1-revive.conf.example "$pkgdir/etc/$pkgname/t1-revive.conf"
 
-	# 2. the patched libimobiledevice stack, in its own prefix
+	# 2. the patched libimobiledevice stack, in its own prefix. libtool baked the build prefix
+	#    into the RUNPATH of every binary and shared library, into the pkg-config files, the
+	#    private udev rule and the *.la files; the shared helper (also used by the offline
+	#    toolkit) deletes the build-time files, rewrites the rest and refuses to leave a build
+	#    path behind.
 	cp -a -- "$srcdir/prefix" "$_root/prefix"
-	# libtool archives and static libraries carry $srcdir paths and are of no use at run time.
-	find "$_root/prefix" \( -name '*.la' -o -name '*.a' \) -delete
-	# libtool baked the build prefix into the RUNPATH of every binary and shared library;
-	# point it at the installed location instead.
-	local _f
-	while IFS= read -r -d '' _f; do
-		patchelf --set-rpath "$_runpath" "$_f" 2>/dev/null || true
-	done < <(find "$_root/prefix" -type f \( -perm -u+x -o -name '*.so*' \) -print0)
-	# The pkg-config files and the private udev rule spell the build prefix out in text.
-	find "$_root/prefix" \( -name '*.pc' -o -name '*.rules' \) -type f \
-		-exec sed -i "s|$srcdir/prefix|/usr/lib/$pkgname/prefix|g" {} +
-	# Nothing under the installed prefix may still point into the build tree.
+	bash tools/relocate-prefix.sh "$_root/prefix" --from "$srcdir/prefix" --to "/usr/lib/$pkgname/prefix"
+	# Nothing under the installed prefix may still point into the build tree (the helper
+	# checks its own prefix; this checks the whole of $srcdir).
 	local _leftover
 	_leftover=$(grep -rlI --binary-files=text -- "$srcdir" "$_root/prefix" 2>/dev/null || true)
 	[ -z "$_leftover" ] || {

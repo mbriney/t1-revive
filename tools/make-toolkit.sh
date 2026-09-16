@@ -23,6 +23,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 for t in tar zstd sha256sum; do command -v "$t" >/dev/null || { echo "missing tool: $t" >&2; exit 1; }; done
+[[ -d "$ROOT/prefix/bin" ]] && ! command -v patchelf >/dev/null && { echo "missing tool: patchelf (needed to relocate prefix/)" >&2; exit 1; }
 [[ -f "$ROOT/VERSION" ]] && [[ -d "$ROOT/lib" ]] || { echo "not a t1-revive checkout: $ROOT" >&2; exit 1; }
 
 STAMP=$(date +%Y%m%d)
@@ -43,9 +44,21 @@ for item in bin lib tools contrib docs skills VERSION LICENSE README.md AGENTS.m
 done
 find "$R" \( -name __pycache__ -o -name '*.pyc' -o -name '*.log' -o -name .git \) -prune -exec rm -rf {} + 2>/dev/null || true
 # 2. the built binaries, when present (no sources; a SOURCES file states where they came from)
+# 3. relocated: the build machine's prefix is baked into every binary's RUNPATH and into a few
+#    text files, so a verbatim copy only runs from the path it was built at and carries a home
+#    directory the identifier scan refuses. $ORIGIN-relative RUNPATHs let the tree run from
+#    wherever the stick or go.sh puts it; the text files point at go.sh's install location.
 if [[ -d "$ROOT/prefix/bin" ]]; then
   cp -a -- "$ROOT/prefix" "$R/prefix"
-  if [[ -f "$ROOT/vendor/SOURCES.template" ]]; then cp -- "$ROOT/vendor/SOURCES.template" "$R/prefix/SOURCES"
+  bash "$ROOT/tools/relocate-prefix.sh" "$R/prefix" --to /usr/local/lib/t1-revive/prefix --origin --strip-dev \
+    || { echo "REFUSING: prefix/ could not be relocated (see above)"; exit 1; }
+  if [[ -f "$ROOT/vendor/SOURCES.template" ]]; then
+    # the same corresponding-source statement the package installs, placeholders filled
+    sed -e "s|@VERSION@|$(tr -d '[:space:]' < "$ROOT/VERSION")|g" \
+        -e "s|@SHA256_LIBIRECOVERY_PATCH@|$(sha256sum "$ROOT/vendor/patches/libirecovery.patch" | cut -d' ' -f1)|" \
+        -e "s|@SHA256_USBMUXD_PATCH@|$(sha256sum "$ROOT/vendor/patches/usbmuxd.patch" | cut -d' ' -f1)|" \
+        -e "s|@SHA256_IDEVICERESTORE_PATCH@|$(sha256sum "$ROOT/vendor/patches/idevicerestore.patch" | cut -d' ' -f1)|" \
+        "$ROOT/vendor/SOURCES.template" > "$R/prefix/SOURCES"
   else printf 'Built by build.sh from the pinned upstreams and patches under vendor/ (see the repository).\n' > "$R/prefix/SOURCES"; fi
   HAVE_PREFIX=yes
 else

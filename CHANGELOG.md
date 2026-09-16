@@ -4,6 +4,46 @@ Dates are the days the work was proven on hardware, taken from the maintainer's 
 engineering notebook. Everything before the first public version happened on one
 MacBookPro14,3.
 
+## 0.1.2 (unreleased)
+
+Three tester reports in one night (issues #4, #5, #6), all on 0.1.0 or 0.1.1, two of them
+successful regenerations on models nobody had run before.
+
+- **MacBookPro14,2 and MacBookPro13,3 are tested models** (issues #5 and #4): one wiped-ESP
+  regeneration each, persisting across a full power cycle, Touch ID enrolled through t1bridge
+  afterwards. `model_status` says `tested` for both, so the tool no longer tells their next
+  users that they are the first; the `13,2` stays `untested`. The README table has the rows
+- **`report` counted every diagnostic line twice** (issue #6, reported with the cause and the fix
+  by @bleedmonkey): `diag()` writes each line to the per-command log and to the aggregate
+  `diagnostics.log`, and the bundle globbed both, so a single regeneration read as two identical
+  ones and the merged stream came out in filename order, not in the order the commands ran. The
+  bundle now reads the aggregate alone, in order; the per-command logs are the fallback when it
+  is absent and the source for `--since`, and the two are never combined. `diag-log-source`
+  says which was read
+- **`backup` and `preflight` mount an unmounted ESP read-only** (issue #2 follow-up, @bjhinkle):
+  with the 0.1.1 selection fix, `backup` on a dual-boot Mac reaches Apple's ESP for the first
+  time, and mounted it read-write in order to read it. `esp_mount DEVICE ro` mounts
+  `ro,nosuid,nodev,noexec`; `stage` and the regeneration still mount read-write
+- as a normal user, `status` and `report` mark the `/boot` fallback as provisional when a
+  candidate could not be looked inside, and say to run as root, instead of stating the `/boot`
+  reason as a fact
+- a read-only probe that will not unmount is detached lazily, and its directory is removed only
+  once nothing is mounted on it; `preflight` looks at the candidates once instead of four times
+- the reset step's exit 3 names the running kernel and the `dkms` commands: on the 13,3 the chain
+  stopped there twice with `elapsed=0` (`acpi_call` not loaded at that moment, on a kernel that
+  was not the `linux` package); troubleshooting has the entry, and docs/omarchy.md records the
+  `t1bridge-import.service` `ProtectSystem=strict` failure from the same run with its drop-in
+- **the offline toolkit ships again** (issue #1): `tools/relocate-prefix.sh` strips the built
+  binaries, rewrites their RUNPATH (`$ORIGIN`-relative for the toolkit, the installed path for the
+  package), drops the build-time files and refuses to leave a build path behind; the PKGBUILD
+  and `make-toolkit.sh` share it. The toolkit's `prefix/` goes from 10 MB to under 2 MB
+
+A note for anyone who patched 0.1.0 by hand: the two-ESP bugs of 0.1.1 were masking each
+other. The wrong selection returned the Linux ESP, which was already mounted, so the leaking
+`esp_mount` never ran; a correct selection without the exit-unmount leaves Apple's ESP mounted
+read-write after every `backup` or `preflight`. Take the selection fix, the exit-unmount and
+the read-only mount together (@bjhinkle's observation on issue #2).
+
 ## 0.1.1 (2026-09-15)
 
 Two ESPs on one Mac (issue #2, reported by @bjhinkle from a MacBookPro14,2 that dual-boots

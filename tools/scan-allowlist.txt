@@ -14,3 +14,4 @@ tools/firmware-manifest.sha256	^[0-9a-f]{64} [0-9]+ 	sha256+size manifest of the
 THIRD_PARTY_NOTICES.md	gist\.github\.com/[A-Za-z0-9_.-]+/[0-9a-f]{32}	credit link: a github gist id is 32 hex characters
 vendor/README.md	gist\.github\.com/[A-Za-z0-9_.-]+/[0-9a-f]{32}	credit link: a github gist id is 32 hex characters
 .github/workflows/ci.yml	^ *SHELLCHECK_SHA512: [0-9a-f]{128}$	pinned checksum of the shellcheck release tarball CI downloads (verified 2026-09-10)
+prefix/SOURCES	(^|[ \t])[0-9a-f]{40}([ \t]|$)|[0-9a-f]{64}	the toolkit's copy of vendor/SOURCES.template (staged as prefix/SOURCES): pinned source commits and patch checksums

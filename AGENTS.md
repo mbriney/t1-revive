@@ -56,7 +56,8 @@ lib/steps/personalize.sh step_personalize   replay it; capture the personalised 
 lib/steps/boot.sh        step_boot          boot the T1 from that image in RAM, watch USB for 05ac:8600
 lib/steps/reset.sh       step_reset         the T1-only ACPI reset (the FRST method); ids reset-1, reset-2
                          (the older recipe names for these four are in docs/how-it-works.md)
-tools/                   scan-identifiers.sh, ACPI/plist/pbzx helpers (python), make-toolkit.sh, make-install-stick.sh
+tools/                   scan-identifiers.sh, ACPI/plist/pbzx helpers (python), relocate-prefix.sh (shared by the
+                         PKGBUILD and the toolkit), make-toolkit.sh, make-install-stick.sh
 vendor/                  build recipes and pinned refs for the patched libimobiledevice stack; build.sh at root
 packaging/arch/PKGBUILD  AUR recipe (builds vendor/ from pinned tags; nothing from Apple at build time)
 contrib/stick/           install-stick files: README.txt, install-nvram.sh, nvram template

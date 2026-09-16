@@ -24,6 +24,13 @@ bash tools/make-toolkit.sh                      # builds the toolkit tarball and
 sudo bash tools/make-install-stick.sh /dev/sdX  # writes the ISO, adds the TOOLKIT partition
 ```
 
+The toolkit carries the patched restore binaries from `prefix/` relocated so that they run
+from wherever the tree is unpacked: their RUNPATH is `$ORIGIN`-relative, the build-time files
+(`*.la`, `*.a`, headers, man pages, pkg-config) are dropped, and the udev rule points at
+go.sh's install location. `tools/relocate-prefix.sh` does that, and the identifier scan runs
+over the staged tree afterwards; a toolkit that still carried the build machine's path would
+be refused (issue #1). `patchelf` is needed on the machine that builds it.
+
 `make-install-stick.sh` refuses internal disks, verifies the ISO's checksum, writes the ISO,
 then adds a FAT partition in the free space with the tarball, its checksum, the files from
 `contrib/stick/` and a `README.txt`. Pass `--partition-only` to add the partition to a stick
