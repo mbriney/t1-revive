@@ -125,6 +125,20 @@ fingerprint every 30 s and a long run of timeouts wedges the enclave session. Fi
 shutdown, then power on. A reboot is not enough. Password login is never affected. Do not
 delete `/var/lib/t1bridge` to clear it. Reported upstream.
 
+**`t1bridge-import.service` fails with exit 30, "private import temporary file could not be
+created".** Seen on a 13,3 (issue #4): the unit runs with `ProtectSystem=strict`, so `/` is
+read-only, and the importer writes its temporary file to its working directory. A drop-in
+that gives it a writable one clears it:
+
+```sh
+sudo systemctl edit t1bridge-import.service
+# [Service]
+# WorkingDirectory=/var/lib/t1bridge/machine-data
+sudo systemctl daemon-reload && sudo systemctl start t1bridge-import.service
+```
+
+Not seen on the 14,3. If it reproduces for you, it belongs upstream with t1bridge.
+
 **The Touch Bar stays dark until you log out and back in.** The renderer runs under your
 systemd user manager, which fixed its supplementary groups when the session started, before
 the `t1bridge` group existed. Log out and back in, then the bar lights. Touch ID does not

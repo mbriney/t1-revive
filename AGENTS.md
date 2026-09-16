@@ -135,8 +135,8 @@ Functions read only their parameters and `T1R_*` variables, so bats can test the
 ```
 model_id                 DMI product_name (e.g. MacBookPro14,3) from $T1R_DMI/product_name
 model_status ID          prints: tested | untested | unsupported
-                         tested:   MacBookPro14,3
-                         untested: MacBookPro13,2 MacBookPro13,3 MacBookPro14,2  (warn and continue)
+                         tested:   MacBookPro14,3 MacBookPro14,2 MacBookPro13,3 (see the README table)
+                         untested: MacBookPro13,2  (warn and continue)
                          unsupported: anything else (die 4)
 esp_candidates           prints "DEVICE MOUNTPOINT HAS_APPLE" per line for partitions with
                          PARTTYPE c12a7328-f81f-11d2-ba4b-00a0c93ec93b (from lsblk -J or T1R_LSBLK_JSON);

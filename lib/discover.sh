@@ -21,8 +21,8 @@ model_id() {
 
 model_status() {
   case "${1:-}" in
-    MacBookPro14,3) printf 'tested\n';;
-    MacBookPro13,2|MacBookPro13,3|MacBookPro14,2) printf 'untested\n';;
+    MacBookPro14,3|MacBookPro14,2|MacBookPro13,3) printf 'tested\n';;
+    MacBookPro13,2) printf 'untested\n';;
     *) printf 'unsupported\n';;
   esac
 }

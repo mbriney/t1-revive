@@ -27,10 +27,10 @@ setup() { t1r_env; }
   assert_eq untested "$(model_status MacBookPro13,2)"
 }
 
-@test "model_status: MacBookPro13,3 and MacBookPro14,2 -> untested" {
+@test "model_status: MacBookPro13,3 and MacBookPro14,2 -> tested (one confirmed regeneration each, issues #4 and #5)" {
   t1r_load discover; t1r_need model_status
-  assert_eq untested "$(model_status MacBookPro13,3)"
-  assert_eq untested "$(model_status MacBookPro14,2)"
+  assert_eq tested "$(model_status MacBookPro13,3)"
+  assert_eq tested "$(model_status MacBookPro14,2)"
 }
 
 @test "model_status: MacBookPro15,1 (T2) -> unsupported" {

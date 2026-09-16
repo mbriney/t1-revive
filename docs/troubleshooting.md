@@ -89,8 +89,8 @@ which is the T1's, pin it with `T1R_FRST_METHOD=\_SB....FRST` in `/etc/t1-revive
 it is accepted only if it is one of the discovered candidates.
 
 **`unsupported model`, exit 4.** Only `MacBookPro13,2`, `13,3`, `14,2`, `14,3` are accepted.
-On the three untested ones the tool warns and continues. A T2 Mac or a Mac without a Touch
-Bar is out of scope.
+On the `13,2`, the one without a confirmed run, the tool warns and continues. A T2 Mac or a
+Mac without a Touch Bar is out of scope.
 
 **`no backup confirmed`, exit 4.** Run `sudo t1-revive backup --to /path/on/another/device`
 first, then confirm. See the threat model for why this is not optional.
@@ -108,6 +108,17 @@ A warm reboot can leave the T1 running from the previous boot's data even though
 is gone. `preflight` says so. `regenerate` resets it into recovery with FRST first and
 proceeds. If the folder exists and the T1 is at `8600`, there is nothing to regenerate; the
 tool refuses (exit 4).
+
+## Reset stopped at once with exit 3
+
+The diagnostic line reads `step=reset-1 result=error code=3 ... elapsed=0`. The reset did
+not run: `/proc/acpi/call` was not writable at that moment, which means the `acpi_call`
+module was not loaded. The `t1=` value on that line is the T1's state when the step was
+tried and is not the cause. Seen twice in a row on a 13,3 running a kernel that was not the
+`linux` package (`kernel-match: no`), where DKMS can build the module for one kernel while
+another is running. Check `sudo dkms status` for an `acpi_call` build against `uname -r`;
+`sudo t1-revive preflight` loads the module, `--install` rebuilds it. Then resume with
+`--from reset-1`; provision is not redone.
 
 ## Provision or personalize failed (exit 5 or 6)
 
