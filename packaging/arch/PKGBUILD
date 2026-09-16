@@ -54,7 +54,7 @@ _ref() { local v=${1^^}; v=${v//-/_}_$2; printf '%s' "${!v-}"; }
 # The project tarball for tag v$_relver (sha256 of the GitHub archive); update at every tag.
 # 'SKIP' between the version bump and the tag; pinned in a follow-up commit once the tag exists.
 source=("$_srcdir.tar.gz::$url/archive/refs/tags/v$_relver.tar.gz")
-sha256sums=('SKIP')
+sha256sums=('06f6efbf3da0730ac06937816068a7a958c0f32434856add69b827f08284f5eb')
 # One upstream commit tarball per vendored component, so build() never touches the network.
 for _c in $T1R_VENDOR_ORDER; do
 	source+=("$_c-$(_ref "$_c" BASE_COMMIT).tar.gz::$(_ref "$_c" UPSTREAM_URL)/archive/$(_ref "$_c" BASE_COMMIT).tar.gz")
