@@ -65,7 +65,7 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-[[ $JOBS =~ ^[0-9]+$ ]] && [ "$JOBS" -ge 1 ] || die "--jobs must be a positive integer"
+if [[ ! $JOBS =~ ^[0-9]+$ ]] || [ "$JOBS" -lt 1 ]; then die "--jobs must be a positive integer"; fi
 [ -r "$REFS" ] || die "missing $REFS"
 # shellcheck source=vendor/refs.env
 . "$REFS"
@@ -165,8 +165,9 @@ ensure_source() {
 		return 0
 	fi
 	if [ -d "$dir" ]; then
-		[ -f "$dir/configure.ac" ] && [ -x "$dir/autogen.sh" ] \
-			|| die "$dir exists but is not a $name source tree (no configure.ac/autogen.sh)"
+		if [ ! -f "$dir/configure.ac" ] || [ ! -x "$dir/autogen.sh" ]; then
+			die "$dir exists but is not a $name source tree (no configure.ac/autogen.sh)"
+		fi
 		note "source: unpacked tree (no .git; commit cannot be verified, expected $commit)"
 		return 0
 	fi
