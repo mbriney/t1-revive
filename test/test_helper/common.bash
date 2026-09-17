@@ -157,6 +157,52 @@ STUB
   export PATH=$T1R_TMP/bin:$PATH
 }
 
+# t1r_stub_pacman: a fake pacman(8) on PATH for the kernel-package checks, plus a fake module
+# tree at $T1R_MODULES_DIR. Two files drive it, filled by t1r_pacman_installed (pacman -Q) and
+# t1r_pacman_owns (pacman -Qqo). Nothing else about pacman is emulated: any other invocation
+# exits 1, so a test can never reach the real package database.
+t1r_stub_pacman() {
+  export T1R_PACMAN_INSTALLED=$T1R_TMP/pacman-installed T1R_PACMAN_OWNERS=$T1R_TMP/pacman-owners
+  : >"$T1R_PACMAN_INSTALLED"
+  : >"$T1R_PACMAN_OWNERS"
+  export T1R_MODULES_DIR=$T1R_TMP/modules
+  mkdir -p "$T1R_MODULES_DIR/$(uname -r)"
+  t1r_stub_bin pacman <<'STUB'
+#!/usr/bin/env bash
+case "${1:-}" in
+  -Qqo|-Qo)
+    while read -r path pkg; do
+      [[ $path == "${2:-}" ]] || continue
+      printf '%s\n' "$pkg"; exit 0
+    done <"$T1R_PACMAN_OWNERS"
+    printf 'error: No package owns %s\n' "${2:-}" >&2; exit 1;;
+  -Q|-Qq)
+    shift; rc=0
+    [[ $# -gt 0 ]] || { cat "$T1R_PACMAN_INSTALLED"; exit 0; }
+    for want; do
+      line=$(awk -v w="$want" '$1==w{print; exit}' "$T1R_PACMAN_INSTALLED")
+      if [[ -n $line ]]; then printf '%s\n' "$line"
+      else printf "error: package '%s' was not found\n" "$want" >&2; rc=1; fi
+    done
+    exit $rc;;
+esac
+exit 1
+STUB
+}
+
+# t1r_pacman_installed NAME VERSION: make the stub pacman report NAME as installed.
+t1r_pacman_installed() { printf '%s %s\n' "$1" "$2" >>"${T1R_PACMAN_INSTALLED:?t1r_stub_pacman first}"; }
+
+# t1r_pacman_owns PATH PKG: make the stub pacman answer "PKG" for `-Qqo PATH`, and create PATH
+# under the fake module tree so the directory tests in lib/distro.sh see it too.
+t1r_pacman_owns() {
+  printf '%s %s\n' "$1" "$2" >>"${T1R_PACMAN_OWNERS:?t1r_stub_pacman first}"
+  case "$1" in */build) mkdir -p "$1" ;; *) mkdir -p "$(dirname -- "$1")"; : >"$1" ;; esac
+}
+
+# t1r_kernel_dir: the fake module directory of the running kernel (t1r_stub_pacman).
+t1r_kernel_dir() { printf '%s/%s\n' "${T1R_MODULES_DIR:?t1r_stub_pacman first}" "$(uname -r)"; }
+
 # t1r_stub_apple_data: a synthetic EFI/APPLE/EMBEDDEDOS in the stub mount's source tree.
 t1r_stub_apple_data() {
   local d=${T1R_STUB_ESP:?t1r_stub_mount first}/EFI/APPLE/EMBEDDEDOS

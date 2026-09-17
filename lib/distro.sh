@@ -8,8 +8,10 @@
 : "${T1R_MODULES_DIR:=/usr/lib/modules}"
 export T1R_OS_RELEASE T1R_MODULES_DIR
 
-# Packages the prefix binaries and the T1 reset need (from regen-preflight.sh).
-T1R_ARCH_PKGS="libzip libusb curl openssl readline dkms linux-headers acpi_call-dkms"
+# Packages the prefix binaries and the T1 reset need (from regen-preflight.sh). The kernel
+# headers are deliberately not in this list: which package carries them depends on the kernel
+# that is booted, so distro_required_pkgs appends distro_headers_pkg.
+T1R_ARCH_PKGS="libzip libusb curl openssl readline dkms acpi_call-dkms"
 export T1R_ARCH_PKGS
 
 _os_release_get() {  # _os_release_get KEY
@@ -85,16 +87,49 @@ distro_sync_and_upgrade() {
   esac
 }
 
-# distro_kernel_matches: 0 when the running kernel is the installed one. Primary rule: the
-# `linux` package version (normalised) equals uname -r. Also accepted: the running kernel's
-# module directory is owned by an installed package (other kernel flavours, e.g. -lts).
+# distro_kernel_pkg: the installed package that owns the running kernel, resolved from that
+# kernel's own module directory - never assumed to be `linux`. On Omarchy the booted kernel
+# comes from linux-omarchy while a stock, unbooted `linux` is usually installed alongside it,
+# and reading that one names a kernel that is not running (issues #7 and #9). Prints nothing
+# and returns 1 for a kernel no package owns (hand-built, or a fixture module directory).
+distro_kernel_pkg() {
+  local owner
+  [[ "$(distro_family)" = arch ]] || return 1
+  command -v pacman >/dev/null 2>&1 || return 1
+  owner=$(pacman -Qqo "$T1R_MODULES_DIR/$(uname -r)/vmlinuz" 2>/dev/null | awk 'NF{print $1; exit}')
+  [[ -n "$owner" ]] || return 1
+  printf '%s\n' "$owner"
+}
+
+# distro_headers_pkg: the package that carries the headers for the running kernel - the owner
+# of its build directory when they are installed, otherwise "<kernel package>-headers", and
+# the stock "linux-headers" when neither can be resolved. So the check reads the headers dkms
+# actually builds against on a -lts or -omarchy kernel instead of the stock ones, and
+# `preflight --install` installs those.
+distro_headers_pkg() {
+  local owner kpkg
+  if [[ "$(distro_family)" = arch ]] && command -v pacman >/dev/null 2>&1; then
+    owner=$(pacman -Qqo "$T1R_MODULES_DIR/$(uname -r)/build" 2>/dev/null | awk 'NF{print $1; exit}')
+    if [[ -n "$owner" ]]; then printf '%s\n' "$owner"; return 0; fi
+    if kpkg=$(distro_kernel_pkg); then printf '%s-headers\n' "$kpkg"; return 0; fi
+  fi
+  printf 'linux-headers\n'
+}
+
+# distro_required_pkgs: T1R_ARCH_PKGS plus the headers package for the running kernel.
+distro_required_pkgs() { printf '%s %s\n' "$T1R_ARCH_PKGS" "$(distro_headers_pkg)"; }
+
+# distro_kernel_matches: 0 when the running kernel is the installed one. Primary rule: a package
+# owns the running kernel's module directory (any flavour: linux, -lts, -omarchy). Also
+# accepted: the `linux` package version (normalised) equals uname -r, for a module directory
+# no package owns.
 distro_kernel_matches() {
   local running inst
   running=$(uname -r)
   if [[ "$(distro_family)" = arch ]] && command -v pacman >/dev/null 2>&1; then
+    distro_kernel_pkg >/dev/null 2>&1 && return 0
     inst=$(pacman -Q linux 2>/dev/null | awk '{print $2}' | kver_normalize)
     [[ -n "$inst" ]] && [[ "$inst" = "$running" ]] && return 0
-    pacman -Qqo "$T1R_MODULES_DIR/$running/vmlinuz" >/dev/null 2>&1 && return 0
     return 1
   fi
   return 1

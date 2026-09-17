@@ -120,6 +120,21 @@ another is running. Check `sudo dkms status` for an `acpi_call` build against `u
 `sudo t1-revive preflight` loads the module, `--install` rebuilds it. Then resume with
 `--from reset-1`; provision is not redone.
 
+## Preflight says a package is missing and the headers are clearly there
+
+Before 0.1.2 the package check asked for the stock `linux-headers` by name. On a machine whose
+booted kernel is not the `linux` package — Omarchy's `linux-omarchy`, or `linux-lts` — the
+headers live in that kernel's own `-headers` package, so the check reported a missing package
+(1 NO, exit 3) on the line above its own `ok kernel headers for <uname -r>`. The report bundle
+showed the same split: `kernel-headers: yes` next to `pkg.linux-headers: not-installed`, and
+`kernel-match: no` because the bundle read the version of the stock, unbooted `linux`.
+
+0.1.2 resolves both from the running kernel itself (the package that owns
+`/usr/lib/modules/$(uname -r)/`), so the bundle names the kernel that is actually running and
+the check asks for the headers DKMS builds against. On an older version the NO was safe to read
+past when `ok kernel headers for $(uname -r)` passed and `sudo dkms status` showed an
+`acpi_call` build for the running kernel. Reported from a 13,2 in issue #9.
+
 ## Provision or personalize failed (exit 5 or 6)
 
 The tool names the step and stops. Read the tail of `latest.log`.

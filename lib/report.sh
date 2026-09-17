@@ -75,22 +75,32 @@ report_section_system() {
   local kver
   kver=$(uname -r 2>/dev/null)
   report_kv kernel "$kver"
-  # running kernel vs installed kernel package (a mismatch means "reboot needed", exit 7)
-  local pkgver='-' match=unknown
+  # running kernel vs installed kernel package (a mismatch means "reboot needed", exit 7).
+  # The package is the one that owns the running kernel, not `linux`: on Omarchy an unbooted
+  # stock `linux` sits next to the booted linux-omarchy, and naming that one made the bundle
+  # report a kernel that is not running, with kernel-match: no (issues #7 and #9).
+  local pkgname='' pkgver='-' match=unknown
   if command -v pacman >/dev/null 2>&1; then
-    pkgver=$(pacman -Q linux 2>/dev/null | awk '{print $2}')
-    if [ -n "$pkgver" ] && report_have kver_normalize; then
-      pkgver=$(printf '%s\n' "$pkgver" | kver_normalize)
-      if [ "$pkgver" = "$kver" ]; then match=yes; else match=no; fi
+    if report_have distro_kernel_pkg; then pkgname=$(distro_kernel_pkg 2>/dev/null) || pkgname=''; fi
+    [ -n "$pkgname" ] || pkgname=linux
+    pkgver=$(pacman -Q "$pkgname" 2>/dev/null | awk '{print $2}')
+    if report_have distro_kernel_matches; then
+      if distro_kernel_matches 2>/dev/null; then match=yes; else match=no; fi
+    elif [ -n "$pkgver" ] && report_have kver_normalize; then
+      if [ "$(printf '%s\n' "$pkgver" | kver_normalize)" = "$kver" ]; then match=yes; else match=no; fi
     fi
   fi
+  report_kv kernel-pkg-name "$pkgname"
   report_kv kernel-pkg "$pkgver"
   report_kv kernel-match "$match"
-  if [ -d "/usr/lib/modules/$kver/build" ]; then
+  if report_have distro_headers_present; then
+    if distro_headers_present; then report_kv kernel-headers yes; else report_kv kernel-headers no; fi
+  elif [ -d "${T1R_MODULES_DIR:-/usr/lib/modules}/$kver/build" ]; then
     report_kv kernel-headers yes
   else
     report_kv kernel-headers no
   fi
+  if report_have distro_headers_pkg; then report_kv kernel-headers-pkg "$(distro_headers_pkg 2>/dev/null)"; fi
 }
 
 report_section_model() {
@@ -238,9 +248,17 @@ report_section_packages() {
     report_kv packages pacman-not-available
     return
   fi
-  local p ver
-  for p in linux linux-headers acpi_call-dkms dkms t1bridge t1bridge-dkms \
+  # The kernel and headers packages are the ones the running kernel actually comes from, so a
+  # -lts or -omarchy kernel is not reported as "linux-headers: not-installed" (issue #9).
+  local p ver kpkg='' hpkg='' seen=''
+  if report_have distro_kernel_pkg; then kpkg=$(distro_kernel_pkg 2>/dev/null) || kpkg=''; fi
+  if report_have distro_headers_pkg; then hpkg=$(distro_headers_pkg 2>/dev/null) || hpkg=''; fi
+  [ -n "$kpkg" ] || kpkg=linux
+  [ -n "$hpkg" ] || hpkg=linux-headers
+  for p in "$kpkg" "$hpkg" acpi_call-dkms dkms t1bridge t1bridge-dkms \
            libfprint-t1bridge fprintd-t1bridge libfprint fprintd; do
+    case " $seen " in *" $p "*) continue ;; esac
+    seen="$seen $p"
     ver=$(pacman -Q "$p" 2>/dev/null | awk '{print $2}')
     report_kv "pkg.$p" "${ver:-not-installed}"
   done

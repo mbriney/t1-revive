@@ -288,3 +288,67 @@ diag_line() { printf 't1-revive-diagnostic v=1 component=%s step=%s result=ok %s
   assert_status 0
   assert_eq "sourced-ok" "$output"
 }
+
+# --- the kernel the bundle names (issues #7 and #9) -----------------------------------------
+# The Omarchy layout: the booted kernel is linux-omarchy, and a stock, unbooted `linux` is
+# installed next to it. The bundle used to read `linux`, so it named a kernel that is not
+# running, said kernel-match: no, and listed pkg.linux-headers as not-installed.
+report_omarchy_kernel() {
+  t1r_use_osrelease arch
+  t1r_stub_pacman
+  t1r_pacman_installed linux 7.2.3.arch1-3
+  t1r_pacman_installed linux-headers 7.2.3.arch1-3
+  t1r_pacman_installed linux-omarchy 7.2.5-3
+  t1r_pacman_installed linux-omarchy-headers 7.2.5-3
+  t1r_pacman_owns "$(t1r_kernel_dir)/vmlinuz" linux-omarchy
+  t1r_pacman_owns "$(t1r_kernel_dir)/build" linux-omarchy-headers
+  t1r_load distro
+}
+
+@test "report: names the package that owns the running kernel, and matches on it" {
+  report_omarchy_kernel
+  report_load
+  t1r_run cmd_report
+  assert_status 0
+  assert_contains "$output" 'kernel-pkg-name: linux-omarchy'
+  assert_contains "$output" 'kernel-pkg: 7.2.5-3'
+  assert_contains "$output" 'kernel-match: yes'
+  assert_contains "$output" 'kernel-headers-pkg: linux-omarchy-headers'
+}
+
+@test "report: the package list carries the running kernel's packages, not the stock ones" {
+  report_omarchy_kernel
+  report_load
+  t1r_run cmd_report
+  assert_status 0
+  assert_contains "$output" 'pkg.linux-omarchy: 7.2.5-3'
+  assert_contains "$output" 'pkg.linux-omarchy-headers: 7.2.5-3'
+  refute_contains "$output" 'pkg.linux-headers: not-installed'
+}
+
+@test "report: a stock kernel still reports linux and is listed once" {
+  t1r_use_osrelease arch
+  t1r_stub_pacman
+  t1r_pacman_installed linux 7.2.3.arch1-3
+  t1r_pacman_installed linux-headers 7.2.3.arch1-3
+  t1r_pacman_owns "$(t1r_kernel_dir)/vmlinuz" linux
+  t1r_pacman_owns "$(t1r_kernel_dir)/build" linux-headers
+  t1r_load distro
+  report_load
+  t1r_run cmd_report
+  assert_status 0
+  assert_contains "$output" 'kernel-pkg-name: linux'
+  assert_eq 1 "$(printf '%s\n' "$output" | grep -c '^pkg\.linux: ')"
+  assert_eq 1 "$(printf '%s\n' "$output" | grep -c '^pkg\.linux-headers: ')"
+}
+
+@test "report: without lib/distro.sh the kernel lines still fall back to linux" {
+  t1r_use_osrelease arch
+  t1r_stub_pacman
+  t1r_pacman_installed linux 7.2.3.arch1-3
+  report_load
+  t1r_run cmd_report
+  assert_status 0
+  assert_contains "$output" 'kernel-pkg-name: linux'
+  assert_contains "$output" 'pkg.linux: 7.2.3.arch1-3'
+}

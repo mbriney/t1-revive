@@ -63,6 +63,8 @@ pf_load() {
 
 @test "preflight --local: an untested model is an ok line with a warning" {
   t1r_use_dmi 13_2; pf_load
+  # 13,2 is a tested model since issue #9; the fixture stands in for the next new one
+  T1R_TESTED_MODELS="MacBookPro14,3" T1R_UNTESTED_MODELS="MacBookPro13,2"
   run cmd_preflight --local
   assert_status 3
   assert_contains "$output" "model MacBookPro13,2 (a T1 Mac"
@@ -165,4 +167,48 @@ pf_load() {
                . "$T1R_ROOT/lib/distro.sh"; . "$T1R_ROOT/lib/cmd-preflight.sh"; echo sourced-ok'
   assert_status 0
   assert_eq "sourced-ok" "$output"
+}
+
+# --- the headers package of the running kernel (issue #9) -----------------------------------
+# On Omarchy the booted kernel is linux-omarchy and its headers are in linux-omarchy-headers,
+# while a stock, unbooted `linux` is usually installed as well. Asking for the stock
+# `linux-headers` produced a NO and exit 3 on a machine whose headers were present and whose
+# DKMS builds were fine.
+pf_omarchy_kernel() {
+  t1r_stub_pacman
+  local p
+  for p in libzip libusb curl openssl readline dkms acpi_call-dkms; do
+    t1r_pacman_installed "$p" 1.0-1
+  done
+  t1r_pacman_installed linux 7.2.3.arch1-3
+  t1r_pacman_installed linux-omarchy 7.2.5-3
+  t1r_pacman_installed linux-omarchy-headers 7.2.5-3
+  t1r_pacman_owns "$(t1r_kernel_dir)/vmlinuz" linux-omarchy
+  t1r_pacman_owns "$(t1r_kernel_dir)/build" linux-omarchy-headers
+}
+
+@test "preflight: the booted kernel's headers count, the stock linux-headers are not demanded" {
+  pf_omarchy_kernel
+  pf_load
+  run cmd_preflight --local
+  refute_contains "$output" 'missing packages'
+  assert_contains "$output" 'linux-omarchy-headers'
+  printf '%s\n' "$output" | grep -q '^  ok  .*kernel headers for' || {
+    echo "the headers check did not pass" >&2; return 1; }
+}
+
+@test "preflight: headers that really are missing are still a NO, named for this kernel" {
+  t1r_stub_pacman
+  local p
+  for p in libzip libusb curl openssl readline dkms acpi_call-dkms; do
+    t1r_pacman_installed "$p" 1.0-1
+  done
+  t1r_pacman_installed linux-omarchy 7.2.5-3
+  t1r_pacman_owns "$(t1r_kernel_dir)/vmlinuz" linux-omarchy
+  pf_load
+  run cmd_preflight --local
+  assert_status 3
+  assert_contains "$output" 'missing packages: linux-omarchy-headers'
+  printf '%s\n' "$output" | grep -q '^  NO  no kernel headers for' || {
+    echo "the headers check should have failed" >&2; return 1; }
 }

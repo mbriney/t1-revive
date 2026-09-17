@@ -86,16 +86,20 @@ cmd_preflight() {
     fi
     if distro_kernel_matches; then pf_ok "running kernel $(uname -r) is the installed one"
     else pf_no "the installed kernel differs from the running $(uname -r): reboot, then run this again"; _pf_reboot=1; fi
+    # The headers package is resolved from the running kernel, so a -lts or -omarchy kernel
+    # is not asked for the stock linux-headers it does not build against (issue #9).
+    local pkgs
+    pkgs=$(distro_required_pkgs)
     if [[ "$do_install" = 1 ]] && [[ "$is_root" = 1 ]] && [[ "$_pf_reboot" = 0 ]]; then
       # shellcheck disable=SC2086
-      if distro_install $T1R_ARCH_PKGS; then pf_ok "packages: $T1R_ARCH_PKGS"; else pf_no "package install failed: $T1R_ARCH_PKGS (fresh install with only the offline package DB? rerun with --install after 'pacman -Sy')"; fi
+      if distro_install $pkgs; then pf_ok "packages: $pkgs"; else pf_no "package install failed: $pkgs (fresh install with only the offline package DB? rerun with --install after 'pacman -Sy')"; fi
     else
       local missing='' p
-      for p in $T1R_ARCH_PKGS; do distro_installed "$p" || missing="$missing $p"; done
-      if [[ -z "$missing" ]]; then pf_ok "packages: $T1R_ARCH_PKGS"; else pf_no "missing packages:${missing} (sudo t1-revive preflight --install)"; fi
+      for p in $pkgs; do distro_installed "$p" || missing="$missing $p"; done
+      if [[ -z "$missing" ]]; then pf_ok "packages: $pkgs"; else pf_no "missing packages:${missing} (sudo t1-revive preflight --install)"; fi
     fi
   else
-    pf_no "package checks are implemented for Arch-based systems only; make sure the equivalents of '$T1R_ARCH_PKGS' are installed"
+    pf_no "package checks are implemented for Arch-based systems only; make sure the equivalents of '$T1R_ARCH_PKGS' and the headers for $(uname -r) are installed"
   fi
   if distro_headers_present; then pf_ok "kernel headers for $(uname -r)"; else pf_no "no kernel headers for $(uname -r) (dkms cannot build acpi_call)"; fi
   if [[ "$is_root" = 1 ]] && [[ "$T1R_DRY_RUN" != 1 ]]; then modprobe acpi_call 2>/dev/null || true; fi
