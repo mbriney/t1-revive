@@ -127,6 +127,12 @@ report_section_t1() {
 report_esp_one() {
   local dev="$1" mp="${2:-}" has_apple="${3:-}" n="$4"
   report_kv "esp[$n].device" "$dev"
+  # whether this candidate is on a removable disk: a USB stick with its own EFI partition is
+  # a candidate the selection rule skips, and a bundle that does not say so reads as if the
+  # machine had two internal ESPs (issue #7)
+  if report_have esp_removable; then
+    if esp_removable "$dev" 2>/dev/null; then report_kv "esp[$n].removable" yes; else report_kv "esp[$n].removable" no; fi
+  fi
   case "$mp" in ''|-|none|null) mp='' ;; esac
   if [ -n "$mp" ]; then report_kv "esp[$n].mounted" yes; else report_kv "esp[$n].mounted" no; fi
   if [ -z "$mp" ]; then

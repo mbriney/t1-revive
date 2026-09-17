@@ -352,3 +352,11 @@ report_omarchy_kernel() {
   assert_contains "$output" 'kernel-pkg-name: linux'
   assert_contains "$output" 'pkg.linux: 7.2.3.arch1-3'
 }
+
+@test "report: says whether each ESP candidate is on a removable disk (issue #7)" {
+  report_load
+  t1r_run cmd_report
+  assert_status 0
+  printf '%s\n' "$output" | grep -qE '^esp\[0\]\.removable: (yes|no)$' || {
+    echo "no removable line for the first candidate" >&2; return 1; }
+}

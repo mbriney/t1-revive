@@ -178,6 +178,27 @@ is dark.
 - If the files are missing, `--from stage` while the T1 is booted, or `--from boot` and
   let it stage again.
 
+**A verified staged set that the firmware does not load.** `stage` prints three `verified`
+lines, `--from boot` brings the T1 up over USB every time, and a true cold boot still comes up
+at `1281`. Open on a 14,3 as issue #7; a 13,2 on the same tool version and the same kernel
+loaded its staged set at the first cold boot (issue #9), so this is not a property of the
+staged files themselves. What is worth separating before adding a report:
+
+- **Which ESP does the firmware read?** `esp-selected` is the partition the tool wrote to, not
+  proof that the firmware boots from it. `esp-candidates: 2` with an `esp[n].removable: yes`
+  means a USB stick with its own EFI partition was attached; unplug everything removable and
+  cold boot again. On a Mac that also has macOS, check that `EFI/APPLE` on the partition the
+  tool chose is the one the firmware blesses.
+- **Was `EFI/APPLE` there before?** A pre-existing `FDRData` of a different size than the one
+  `provision` fetched means the folder was populated earlier and never activated, so the
+  machine may have been in this state before t1-revive ran.
+- **Cold boot means power off.** A warm `reboot` does not power-cycle the T1, and neither does
+  suspend; the T1 is a separate always-on computer. Shut down, wait, power on.
+
+There is no host-side check that distinguishes "the firmware never tried" from "the firmware
+tried and the T1 rejected the image": nothing the T1 does before the kernel starts is visible
+from Linux. Say which of the above you ruled out when you report.
+
 ## Handover to t1bridge
 
 The t1bridge side of these entries is Omarchy-specific in places; the exact commands are in
