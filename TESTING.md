@@ -10,8 +10,8 @@ are, and what happens with a report.
 | --- | --- |
 | A 2016/2017 Touch Bar MacBook Pro (`MacBookPro13,2`, `13,3`, `14,2`, `14,3`) on Arch or Omarchy, `lsusb` shows `05ac:1281`, and `EFI/APPLE/EMBEDDEDOS` is gone | You are the reason this exists. File a [Wiped-ESP registration](https://github.com/niconistal/t1-revive/issues/new?template=wiped-esp-registration.yml) first, then follow the reply. |
 | The same Mac, `EFI/APPLE/EMBEDDEDOS/FDRData` exists, Touch Bar working or not | Run `t1-revive status` and `sudo t1-revive report`, use the t1bridge install (on Omarchy, with [docs/omarchy.md](docs/omarchy.md)), and file an [Intact-ESP report](https://github.com/niconistal/t1-revive/issues/new?template=intact-esp-report.yml) whether it worked or not. Do not regenerate; you have nothing to regenerate. |
-| A `13,2`, `13,3` or `14,2` in either state | Doubly wanted: the tool warns `untested` on these and continues; your report turns that into `tested` or into a documented difference. |
-| A `14,3` | Wanted too: a second machine of the proven model tells us what is machine-specific. |
+| A `13,2`, `13,3` or `14,2` in either state | Wanted: each has exactly one confirmed run, so a second is what turns one report into a pattern (or into a documented difference). |
+| A `14,3` | Wanted too: a second machine of the proven model tells us what is machine-specific — and one 14,3 has an open cold-boot failure ([#7](https://github.com/niconistal/t1-revive/issues/7)). |
 | A T2 Mac (2018 and later) or a Mac without a Touch Bar | Out of scope. See the t2linux project. |
 | Any of the above on another distro | The restore side is distro-neutral; `lib/distro.sh` is not yet. Register and say which distro; expect packaging work before a run. |
 
@@ -67,8 +67,9 @@ are, and what happens with a report.
 - A failure becomes one of: a fix in t1-revive, a report filed upstream (t1bridge,
   libimobiledevice) with your permission and your handle if you want it, or a documented
   limitation in `docs/troubleshooting.md` with the model and the exact symptom.
-- A success on a model that was `untested` becomes `tested` in `lib/discover.sh` and a
-  row in the README table.
+- A success on a model that was `untested` moves it to `T1R_TESTED_MODELS` in
+  `lib/discover.sh` and adds a row to the README table. Every model on the allowlist has a
+  confirmed run now, so a second report on one of them is a confirmation, not a promotion.
 
 ## Response expectations
 

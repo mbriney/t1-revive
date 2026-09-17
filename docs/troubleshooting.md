@@ -88,9 +88,9 @@ automatically. The tool never picks one at random. If you have read the tables a
 which is the T1's, pin it with `T1R_FRST_METHOD=\_SB....FRST` in `/etc/t1-revive/t1-revive.conf`;
 it is accepted only if it is one of the discovered candidates.
 
-**`unsupported model`, exit 4.** Only `MacBookPro13,2`, `13,3`, `14,2`, `14,3` are accepted.
-On the `13,2`, the one without a confirmed run, the tool warns and continues. A T2 Mac or a
-Mac without a Touch Bar is out of scope.
+**`unsupported model`, exit 4.** Only `MacBookPro13,2`, `13,3`, `14,2`, `14,3` are accepted;
+all four have a confirmed run. A model added to the allowlist without one warns and
+continues. A T2 Mac or a Mac without a Touch Bar is out of scope.
 
 **`no backup confirmed`, exit 4.** Run `sudo t1-revive backup --to /path/on/another/device`
 first, then confirm. See the threat model for why this is not optional.

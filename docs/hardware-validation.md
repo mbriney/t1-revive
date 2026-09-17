@@ -18,8 +18,8 @@ Stop if any line is a no. Do not change PAM, firmware, USB state or power settin
 a yes.
 
 - [ ] The model is one of `MacBookPro13,2`, `13,3`, `14,2`, `14,3`
-      (`cat /sys/class/dmi/id/product_name`). Note whether it is one of the tested `14,3`,
-      `14,2`, `13,3` or the untested `13,2`.
+      (`cat /sys/class/dmi/id/product_name`). All four have a confirmed run; note which one
+      yours is, since each model's row rests on a single machine.
 - [ ] `lsusb` shows the T1 at `05ac:1281` (recovery), or at `05ac:8600` with no
       `EFI/APPLE/EMBEDDEDOS` on the ESP (a warm reboot after the wipe). Note which.
 - [ ] Any copy of `EFI/APPLE` from this Mac that exists anywhere has been located and kept.

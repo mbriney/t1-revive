@@ -8,12 +8,13 @@ Short answers, consistent with the README's claims. Expand only where the reader
 MacBook Pros, `MacBookPro13,2`, `13,3`, `14,2`, `14,3`. T2 Macs keep their firmware
 differently and have their own Linux projects (t2linux).
 
-**Will it work on my 13,2, 13,3 or 14,2?** Untested by us. The tool accepts these four
-models, warns on the three untested ones, and continues. t1bridge itself is confirmed on
-13,2 and 13,3 by its testers. The restore recipe this tool follows was first done on a 13,2
-for the Touch Bar. If you run it, use the checklist in
+**Will it work on my 13,2, 13,3 or 14,2?** Each of them has exactly one confirmed run:
+a wiped-ESP regeneration that survived a cold boot, reported by a tester on their own
+machine (README's tested table). That is one machine per model, not coverage — and one
+14,3 has an open cold-boot failure ([#7](https://github.com/niconistal/t1-revive/issues/7)),
+so a confirmed model is not a promise. If you run it, use the checklist in
 [hardware-validation.md](hardware-validation.md) and report the result either way; your row
-goes in the README's tested table.
+goes in the table.
 
 **Does it work on Ubuntu, Fedora, Debian?** The regeneration itself is distribution-neutral,
 but the tool's package layer is implemented for Arch-based systems only and fails clearly
