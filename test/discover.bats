@@ -22,9 +22,25 @@ setup() { t1r_env; }
   assert_eq tested "$(model_status MacBookPro14,3)"
 }
 
-@test "model_status: MacBookPro13,2 -> untested" {
+@test "model_status: MacBookPro13,2 -> tested (a confirmed cold boot, issue #9)" {
   t1r_load discover; t1r_need model_status
+  assert_eq tested "$(model_status MacBookPro13,2)"
+}
+
+@test "model_status: every model of the allowlist is tested, and nothing else is accepted" {
+  t1r_load discover; t1r_need model_status
+  local m
+  for m in $T1R_TESTED_MODELS; do assert_eq tested "$(model_status "$m")"; done
+  assert_eq '' "$T1R_UNTESTED_MODELS"
+  assert_eq unsupported "$(model_status MacBookPro15,1)"
+  assert_eq unsupported "$(model_status '')"
+}
+
+@test "model_status: a model on the untested list warns instead of being refused" {
+  t1r_load discover; t1r_need model_status
+  T1R_TESTED_MODELS="MacBookPro14,3" T1R_UNTESTED_MODELS="MacBookPro13,2"
   assert_eq untested "$(model_status MacBookPro13,2)"
+  assert_eq tested "$(model_status MacBookPro14,3)"
 }
 
 @test "model_status: MacBookPro13,3 and MacBookPro14,2 -> tested (one confirmed regeneration each, issues #4 and #5)" {

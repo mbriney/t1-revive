@@ -7,7 +7,7 @@
 [![ci](https://github.com/niconistal/t1-revive/actions/workflows/ci.yml/badge.svg)](https://github.com/niconistal/t1-revive/actions/workflows/ci.yml)
 [![licence: MIT](https://img.shields.io/badge/licence-MIT-3b82f6.svg?logo=opensourceinitiative&logoColor=white)](LICENSE)
 [![Arch Linux](https://img.shields.io/badge/Arch_Linux-based-1793d1.svg?logo=archlinux&logoColor=white)](#-requirements)
-[![tested: MacBookPro14,3 · 14,2 · 13,3](https://img.shields.io/badge/tested_on-MacBookPro14%2C3_%C2%B7_14%2C2_%C2%B7_13%2C3-22c55e.svg?logo=apple&logoColor=white)](#-tested)
+[![tested: MacBookPro14,3 · 14,2 · 13,3 · 13,2](https://img.shields.io/badge/tested_on-MacBookPro14%2C3_%C2%B7_14%2C2_%C2%B7_13%2C3_%C2%B7_13%2C2-22c55e.svg?logo=apple&logoColor=white)](#-tested)
 [![shell: bash](https://img.shields.io/badge/bash-shellcheck_%2B_bats-4EAA25.svg?logo=gnubash&logoColor=white)](#-upstream-status)
 [![companion: t1bridge](https://img.shields.io/badge/companion-t1bridge-a855f7.svg?logo=fingerprint&logoColor=white)](https://github.com/standardagents/t1bridge)
 [![no macOS](https://img.shields.io/badge/macOS-not_required-3ee8a8.svg)](#-install)
@@ -49,12 +49,13 @@ Touch ID.
 > - Never run it unattended. Every device-touching step asks before it proceeds. Stay at
 >   the keyboard, on mains power, and do not let the machine sleep.
 > - Run it only on `MacBookPro13,2`, `13,3`, `14,2` or `14,3`. Anything else is refused.
->   The `14,3`, `14,2` and `13,3` have confirmed runs ([Tested](#-tested)). On the `13,2` the
->   tool warns and continues; you would be the first, so read
->   [docs/hardware-validation.md](docs/hardware-validation.md) and report.
-> - Four machines so far. Everything below was proven on one MacBookPro14,3, several times,
->   including from a fresh install, then once each by testers on a 14,2 and a 13,3, with one
->   more 14,2 as the intact-firmware control. That is evidence, not coverage.
+>   All four now have a confirmed run ([Tested](#-tested)); read
+>   [docs/hardware-validation.md](docs/hardware-validation.md) and report yours.
+> - Five machines so far. Everything below was proven on one MacBookPro14,3, several times,
+>   including from a fresh install, then once each by testers on a 14,2, a 13,3 and a 13,2,
+>   with one more 14,2 as the intact-firmware control. That is evidence, not coverage: one
+>   14,3 report ([#7](https://github.com/niconistal/t1-revive/issues/7)) has a verified staged
+>   set that the firmware does not load at cold boot, and it is open.
 > - Linux next to macOS means two EFI system partitions, Apple's unmounted. Run `status`,
 >   `backup` and `preflight` with `sudo` so the tool can look inside it; `backup` exits 0
 >   only when it wrote and checked a copy. Versions before 0.1.1 chose the Linux one and
@@ -76,8 +77,8 @@ Touch ID.
 | **MacBookPro14,3** | 2026-09-03 restore · 2026-09-06 Touch ID · 2026-09-07 rehearsals · 2026-09-09 fresh install · 2026-09-11 `t1-revive regenerate` 4 min 8 s, no reboot · 2026-09-12 four power cycles later: still ready, FDRData byte-identical to the pre-run copy · 2026-09-14 two more runs from a removed EMBEDDEDOS, 4 min 2 s each, enrolment kept | 🟢 | 🟢 persists across reboot; existing enrolment survives regeneration | @niconistal (maintainer) |
 | MacBookPro14,2 | 2026-09-16 wiped-ESP regeneration on 0.1.0: every step ok at the first attempt, no resumes, 272 s of step time; t1bridge 0.1.9 installed afterwards; cold boot after ~12 h off: Touch Bar lit, T1 in configuration 2, keybag ready; Touch ID enrolled, `verify-match` and `verify-no-match`, sudo and lock screen by touch and by password. Found the report double count fixed in 0.1.2 (issue #6). Run report: issue #5 | 🟢 | 🟢 persists across a cold boot | @bleedmonkey |
 | MacBookPro14,2 | 2026-09-15 intact-ESP control: `status` and `report` on a Mac that dual-boots macOS, firmware intact, T1 booted; found the two-ESP defects fixed in 0.1.1 (issue #2) · 2026-09-16 confirmed 0.1.1 on that layout: Apple's ESP chosen by the `EFI/APPLE` rule, nothing left mounted, the partition byte-identical before and after. Regeneration deliberately not run | ⚪ not run | ⚪ not run (Touch ID was confirmed on that machine during a t1bridge trial that was later rolled back) | @bjhinkle |
-| MacBookPro13,3 | 2026-09-16 wiped-ESP regeneration on 0.1.1, kernel `7.2.5-3-omarchy`: two stops at `reset-1` (exit 3, `acpi_call` not loaded at that moment), then provision → handover clean with `--from`, 4 min 4 s; t1bridge 0.1.9 installed afterwards, keybag ready, Touch ID enrolled at the second try, sudo, polkit and lock screen by touch with the password fallback; camera captures a frame. Run report with every failure and its fix: issue #4 | 🟢 | 🟢 reboot confirmed; a cold boot of the enrolment not yet recorded | reported in #4 (handle on request) |
-| MacBookPro13,2 | | ⚪ untested | ⚪ untested | *your report here* |
+| MacBookPro13,3 | 2026-09-16 wiped-ESP regeneration on 0.1.1, kernel `7.2.5-3-omarchy`: two stops at `reset-1` (exit 3, `acpi_call` not loaded at that moment), then provision → handover clean with `--from`, 4 min 4 s; t1bridge 0.1.9 installed afterwards, keybag ready, Touch ID enrolled at the second try, sudo, polkit and lock screen by touch with the password fallback; camera captures a frame. Run report with every failure and its fix: issue #4 · 2026-09-17 follow-up on `75087ca`: off-disk backup to a USB stick, sha256 still matching the sidecar after a true S5 power cut, and the enrolled finger present on the first boot after it. Issue #8 | 🟢 | 🟢 persists across a cold boot, enrolment kept | reported in #4 and #8 (handle on request) |
+| MacBookPro13,2 | 2026-09-17 wiped-ESP regeneration on 0.1.1 (`75087ca`), kernel `7.2.5-3-omarchy`, single-ESP layout: two dry runs, then provision → stage clean at the first attempt, 4 min 51 s of step time, `stage result=verified`, `handover` skipped (t1bridge not installed yet). Cold boot: the kernel's first and only T1 enumeration was `05ac:8600` — `1281` never appeared. t1bridge 0.1.9 built and installed afterwards, Esc and F1–F12 rendering. Found the preflight headers false positive fixed in 0.1.2. Run report: issue #9 | 🟢 | ⚪ not run (t1bridge installed after the run; Touch Bar confirmed by eye) | @pmbemax |
 
 A confirmed run on any model becomes a row here with your
 handle if you want it there. See [Testing and reporting](#-testing-and-reporting).

@@ -19,12 +19,19 @@ model_id() {
   printf '%s\n' "${m:-unknown}"
 }
 
+# The allowlist, in two lists so a model moves from one to the other when a tester confirms it
+# (the README table is the record). Every T1 Mac is on one of them; anything else is refused.
+# Tested means: a regeneration on that model was reported, staged and survived a cold boot.
+T1R_TESTED_MODELS="MacBookPro14,3 MacBookPro14,2 MacBookPro13,3 MacBookPro13,2"
+T1R_UNTESTED_MODELS=""
+export T1R_TESTED_MODELS T1R_UNTESTED_MODELS
+
 model_status() {
-  case "${1:-}" in
-    MacBookPro14,3|MacBookPro14,2|MacBookPro13,3) printf 'tested\n';;
-    MacBookPro13,2) printf 'untested\n';;
-    *) printf 'unsupported\n';;
-  esac
+  local m=${1:-}
+  [[ -n "$m" ]] || { printf 'unsupported\n'; return; }
+  case " $T1R_TESTED_MODELS " in *" $m "*) printf 'tested\n'; return;; esac
+  case " $T1R_UNTESTED_MODELS " in *" $m "*) printf 'untested\n'; return;; esac
+  printf 'unsupported\n'
 }
 
 # ----- ESP -----------------------------------------------------------------------------

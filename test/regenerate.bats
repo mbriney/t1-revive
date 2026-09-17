@@ -74,6 +74,8 @@ regen_load() {
 
 @test "regenerate: an untested model warns and continues in a dry run" {
   t1r_use_dmi 13_2; t1r_fake_esp; regen_load
+  # 13,2 is a tested model since issue #9; the fixture stands in for the next new one
+  T1R_TESTED_MODELS="MacBookPro14,3" T1R_UNTESTED_MODELS="MacBookPro13,2"
   t1r_run cmd_regenerate
   assert_status 0
   assert_contains "$output" "warning:"
