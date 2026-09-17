@@ -4,15 +4,32 @@ Dates are the days the work was proven on hardware, taken from the maintainer's 
 engineering notebook. Everything before the first public version happened on one
 MacBookPro14,3.
 
-## 0.1.2 (unreleased)
+## 0.1.2 (2026-09-17)
 
-Three tester reports in one night (issues #4, #5, #6), all on 0.1.0 or 0.1.1, two of them
-successful regenerations on models nobody had run before.
+Six tester reports (issues #4 to #9) on 0.1.0 and 0.1.1, four of them successful regenerations
+on models nobody had run before. Every model on the allowlist now has one.
 
-- **MacBookPro14,2 and MacBookPro13,3 are tested models** (issues #5 and #4): one wiped-ESP
-  regeneration each, persisting across a full power cycle, Touch ID enrolled through t1bridge
-  afterwards. `model_status` says `tested` for both, so the tool no longer tells their next
-  users that they are the first; the `13,2` stays `untested`. The README table has the rows
+- **Every allowlisted model is a tested model.** MacBookPro14,2 and 13,3 (issues #5 and #4),
+  then 13,2 (issue #9, @pmbemax): a wiped-ESP regeneration each, persisting across a full power
+  cycle. `model_status` reads two lists, `T1R_TESTED_MODELS` and an empty
+  `T1R_UNTESTED_MODELS`, so a new model moves between them in one line; the tool no longer
+  tells anyone on these four that they are the first. The README table has the rows
+- **`preflight` demanded the stock `linux-headers` by name** (issue #9, @pmbemax): on a kernel
+  that is not the `linux` package — Omarchy's `linux-omarchy`, or `linux-lts` — the headers
+  live in that kernel's own `-headers` package, so a machine with correct headers and working
+  DKMS builds got a NO and exit 3, one line below its own `ok kernel headers for <uname -r>`.
+  The kernel package and the headers package are now resolved from the running kernel's module
+  directory (`distro_kernel_pkg`, `distro_headers_pkg`), so the check asks for the headers DKMS
+  actually builds against and `--install` installs those
+- **the bundle named a kernel that was not running** (same cause, visible in issues #7 and #9):
+  `kernel-pkg` read the version of the stock, unbooted `linux`, so both reports carried
+  `kernel-match: no` on a machine whose kernel was perfectly matched, and
+  `pkg.linux-headers: not-installed` next to `kernel-headers: yes`. The bundle now prints
+  `kernel-pkg-name` and `kernel-headers-pkg`, takes the match from `distro_kernel_matches`, and
+  lists the running kernel's own packages
+- **the bundle says which ESP candidates are removable** (`esp[n].removable`, issue #7): a USB
+  stick with its own EFI partition is a candidate the selection rule skips, and a bundle that
+  did not say so read as if the machine had two internal ESPs
 - **`report` counted every diagnostic line twice** (issue #6, reported with the cause and the fix
   by @bleedmonkey): `diag()` writes each line to the per-command log and to the aggregate
   `diagnostics.log`, and the bundle globbed both, so a single regeneration read as two identical
@@ -37,6 +54,12 @@ successful regenerations on models nobody had run before.
   binaries, rewrites their RUNPATH (`$ORIGIN`-relative for the toolkit, the installed path for the
   package), drops the build-time files and refuses to leave a build path behind; the PKGBUILD
   and `make-toolkit.sh` share it. The toolkit's `prefix/` goes from 10 MB to under 2 MB
+
+Open, not fixed here: on one MacBookPro14,3 a fully verified staged set is not loaded at cold
+boot (issue #7, @lecstor) while the same image boots the T1 over USB every time. A 13,2 on the
+same tool version and the same kernel loaded its staged set at the first cold boot (issue #9),
+so the staged files are not the variable. Nothing the T1 does before the kernel starts is
+visible from Linux; docs/troubleshooting.md now lists what to separate before adding a report.
 
 A note for anyone who patched 0.1.0 by hand: the two-ESP bugs of 0.1.1 were masking each
 other. The wrong selection returned the Linux ESP, which was already mounted, so the leaking
