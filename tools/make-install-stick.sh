@@ -34,7 +34,7 @@ done
 [[ "$(id -u)" = 0 ]] || { echo "run with sudo"; exit 1; }
 [[ -f "$ISO" ]] || { echo "no such ISO: $ISO"; exit 1; }
 [[ -n "$KIT" ]] || KIT=$(find "$(dirname -- "$ROOT")" -maxdepth 1 -name 't1-revive-toolkit-*.tar.zst' -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
-[[ -n "$KIT" ]] && [[ -f "$KIT" ]] || { echo "no toolkit tarball found; build one with tools/make-toolkit.sh or pass --toolkit FILE"; exit 1; }
+if [[ -z "$KIT" || ! -f "$KIT" ]]; then echo "no toolkit tarball found; build one with tools/make-toolkit.sh or pass --toolkit FILE"; exit 1; fi
 [[ -f "$KIT.sha256" ]] || { echo "missing $KIT.sha256 (make-toolkit.sh writes it)"; exit 1; }
 for f in go.sh README.txt install-nvram.sh brcmfmac43602-pcie.txt; do
   [[ -f "$STICK/$f" ]] || { echo "missing $STICK/$f"; exit 1; }

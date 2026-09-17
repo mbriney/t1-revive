@@ -305,7 +305,7 @@ main() {
 		selected "$name" || continue
 		url=$(ref "$name" UPSTREAM_URL); commit=$(ref "$name" BASE_COMMIT)
 		version=$(ref "$name" VERSION); patch=$(ref "$name" PATCH)
-		[ -n "$url" ] && [ -n "$commit" ] && [ -n "$version" ] || die "incomplete refs.env entry for $name"
+		if [ -z "$url" ] || [ -z "$commit" ] || [ -z "$version" ]; then die "incomplete refs.env entry for $name"; fi
 		[[ $commit =~ ^[0-9a-f]{40}$ ]] || die "refs.env: $name commit is not a full sha"
 		say "$name @ ${commit:0:12} ($version)"
 		fork_url=$(ref "$name" FORK_URL); fork_branch=$(ref "$name" FORK_BRANCH)

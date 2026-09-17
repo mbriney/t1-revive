@@ -108,8 +108,9 @@ step_personalize() {
   # are fatal only with --strict.
   if is_dry; then note "(dry) artefact gate skipped (no restore ran)"; return 0; fi
   diag step=personalize restore_rc="$rc" artefacts_ok="$ok"
-  [ -s "$priv/combined.preflight.memboot" ] && [ -s "$priv/preflight.apticket" ] \
-    || { warn "personalize finished but image/ticket missing"; return 1; }
+  if [ ! -s "$priv/combined.preflight.memboot" ] || [ ! -s "$priv/preflight.apticket" ]; then
+    warn "personalize finished but image/ticket missing"; return 1
+  fi
   if [ "$rc" != 0 ] || [ "$ok" != 1 ]; then
     if [ "${T1R_STRICT:-0}" = 1 ]; then warn "personalize incomplete (rc=$rc, artefacts=$ok); --strict: stopping"; return 1; fi
     warn "personalize: idevicerestore exited $rc, artefacts complete=$ok; image and ticket are present so continuing as the proven run did (use --strict to stop here)"

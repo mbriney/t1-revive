@@ -119,7 +119,7 @@ _fw_extract() {
   local pkg=$1 cache root tmp tools
   cache=$(_fw_cache); tools=$(_fw_root)/tools
   command -v python3 >/dev/null 2>&1 || die 1 "python3 is required to extract the firmware package"
-  [[ -r "$tools/xar-extract.py" ]] && [[ -r "$tools/pbzx.py" ]] || die 1 "extractors missing under $tools"
+  if [[ ! -r "$tools/xar-extract.py" || ! -r "$tools/pbzx.py" ]]; then die 1 "extractors missing under $tools"; fi
   tmp=$(mktemp -d -- "$cache/firmware.tmp.XXXXXX") || die 1 "cannot create a temporary directory in $cache"
   chmod 0755 -- "$tmp"
   note "extracting the firmware bundle (xar -> Payload -> pbzx -> cpio)"
