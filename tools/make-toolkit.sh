@@ -24,7 +24,7 @@ while [[ $# -gt 0 ]]; do
 done
 for t in tar zstd sha256sum; do command -v "$t" >/dev/null || { echo "missing tool: $t" >&2; exit 1; }; done
 [[ -d "$ROOT/prefix/bin" ]] && ! command -v patchelf >/dev/null && { echo "missing tool: patchelf (needed to relocate prefix/)" >&2; exit 1; }
-[[ -f "$ROOT/VERSION" ]] && [[ -d "$ROOT/lib" ]] || { echo "not a t1-revive checkout: $ROOT" >&2; exit 1; }
+if [[ ! -f "$ROOT/VERSION" || ! -d "$ROOT/lib" ]]; then echo "not a t1-revive checkout: $ROOT" >&2; exit 1; fi
 
 STAMP=$(date +%Y%m%d)
 case "$OUT" in

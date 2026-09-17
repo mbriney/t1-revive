@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
     *) [[ -z "$PREFIX" ]] || { echo "one PREFIX only" >&2; usage; }; PREFIX=$1; shift;;
   esac
 done
-[[ -n "$PREFIX" ]] && [[ -n "$TO" ]] || usage
+if [[ -z "$PREFIX" || -z "$TO" ]]; then usage; fi
 [[ -d "$PREFIX" ]] || { echo "not a directory: $PREFIX" >&2; exit 1; }
 for t in patchelf strip; do command -v "$t" >/dev/null || { echo "missing tool: $t" >&2; exit 1; }; done
 PREFIX=$(cd -- "$PREFIX" && pwd -P)
