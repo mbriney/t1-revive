@@ -66,15 +66,19 @@ synthetic_prefix() {
 }
 
 # --- the real prefix, when built --------------------------------------------------------------
+# Called plainly, never as $(real_prefix_copy): bats' `skip` exits the shell it runs in, so inside
+# a command substitution it would end only the subshell -- the test would carry on with an empty
+# path, hand relocate-prefix.sh no PREFIX and fail on its usage text (exit 2) instead of skipping.
+# The path of the copy comes back in REAL_PREFIX, set in the test's own shell.
 real_prefix_copy() {
   [[ -x $T1R_REPO/prefix/bin/irecovery ]] || skip "prefix/ not built (run build.sh)"
   # not $T1R_TMP/prefix: t1r_env already created that one (the stub toolchain directory)
-  cp -a -- "$T1R_REPO/prefix" "$T1R_TMP/relocated"
-  printf '%s' "$T1R_TMP/relocated"
+  REAL_PREFIX=$T1R_TMP/relocated
+  cp -a -- "$T1R_REPO/prefix" "$REAL_PREFIX"
 }
 
 @test "relocate: --origin makes the real binaries run from a copy with no LD_LIBRARY_PATH" {
-  local p; p=$(real_prefix_copy)
+  real_prefix_copy; local p=$REAL_PREFIX
   run bash "$REL" "$p" --to /usr/local/lib/t1-revive/prefix --origin --strip-dev
   assert_status 0
   assert_contains "$output" 'RUNPATH $ORIGIN/../lib:$ORIGIN'
@@ -89,7 +93,7 @@ real_prefix_copy() {
 }
 
 @test "relocate: the build prefix is read from the RUNPATH when --from is not given" {
-  local p; p=$(real_prefix_copy)
+  real_prefix_copy; local p=$REAL_PREFIX
   run bash "$REL" "$p" --to /usr/lib/t1-revive/prefix
   assert_status 0
   assert_eq "/usr/lib/t1-revive/prefix/lib" "$(patchelf --print-rpath "$p/bin/irecovery")"
