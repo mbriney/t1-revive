@@ -16,15 +16,21 @@ fi
 bats_staged=0
 while IFS= read -r -d '' f; do
   case $f in
-    *.bats) bats_staged=1; continue ;;   # not bash: `@test NAME {` is bats syntax (see below)
+    *.bats) bats_staged=1 ;;
     *.sh|*.bash|bin/*|.githooks/*) ;;
     *) continue ;;
   esac
   content=$(git show ":$f" 2>/dev/null) || continue
   case $f in
-    *.sh|*.bash) ;;
+    *.bats|*.sh|*.bash) ;;
     *) [[ $content == '#!'*bash* ]] || continue ;;   # bin/* and hooks: only bash scripts
   esac
+  # `@test NAME {` is bats syntax and not bash, so rewrite the header into a function header
+  # first; the rest of a .bats file is plain bash. bash -n parses and runs nothing, so `load`
+  # (which resolves relative to test/) never executes and the file needs no context.
+  if [[ $f == *.bats ]]; then
+    content=$(printf '%s\n' "$content" | sed -E 's/^[[:space:]]*@test[[:space:]].*\{[[:space:]]*$/_bats_test() {/')
+  fi
   if ! bash -n <(printf '%s\n' "$content") 2>"$errf"; then
     echo "pre-commit: bash -n failed for $f:" >&2
     sed 's|/dev/fd/[0-9]*|'"$f"'|' "$errf" >&2
@@ -33,8 +39,9 @@ while IFS= read -r -d '' f; do
   : >"$errf"
 done < <(git diff --cached --name-only --diff-filter=ACMR -z)
 
-# A staged .bats file cannot be parsed in isolation (its `load` lines resolve relative to
-# test/), so check the work tree instead: `bats --count` sources every suite without running it.
+# The staged .bats files are parsed above, one by one. `bats --count` adds a check of the whole
+# work tree (a suite can break on a helper that is not staged), but only on bats >= 1.11: older
+# versions count the `@test` headers with a lexer and never notice a syntax error at all.
 if (( bats_staged )) && command -v bats >/dev/null 2>&1; then
   if ! bats --count test/ >/dev/null; then
     echo "pre-commit: bats cannot parse test/ (see above)" >&2

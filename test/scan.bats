@@ -141,9 +141,6 @@ t1r_fake_repo() {   # t1r_fake_repo DIR: a git repo carrying a copy of the scann
   printf 'load test_helper/common\n\n@test "y" {\n  if true; then\n}\n' >"$d/test/a.bats"
   git -C "$d" add test/a.bats
   run bash -c "cd '$d' && bash .githooks/pre-commit"
-  if command -v bats >/dev/null 2>&1; then
-    assert_status 1
-  else
-    skip "bats not installed: the hook skips the .bats parse check"
-  fi
+  assert_status 1                       # the hook parses the staged .bats itself: no bats needed
+  assert_contains "$output" "test/a.bats"
 }
