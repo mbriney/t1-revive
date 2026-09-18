@@ -55,7 +55,9 @@ Touch ID.
 >   including from a fresh install, then once each by testers on a 14,2, a 13,3 and a 13,2,
 >   with one more 14,2 as the intact-firmware control. That is evidence, not coverage: one
 >   14,3 report ([#7](https://github.com/niconistal/t1-revive/issues/7)) has a verified staged
->   set that the firmware does not load at cold boot, and it is open.
+>   set that the firmware does not load at cold boot, and it is open — on that machine the
+>   firmware has never loaded `EMBEDDEDOS` from that ESP, including the Mac's own Apple set
+>   from before Linux, so it may predate the tool.
 > - Linux next to macOS means two EFI system partitions, Apple's unmounted. Run `status`,
 >   `backup` and `preflight` with `sudo` so the tool can look inside it; `backup` exits 0
 >   only when it wrote and checked a copy. Versions before 0.1.1 chose the Linux one and

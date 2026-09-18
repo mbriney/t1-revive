@@ -182,22 +182,43 @@ is dark.
 lines, `--from boot` brings the T1 up over USB every time, and a true cold boot still comes up
 at `1281`. Open on a 14,3 as issue #7; a 13,2 on the same tool version and the same kernel
 loaded its staged set at the first cold boot (issue #9), so this is not a property of the
-staged files themselves. What is worth separating before adding a report:
+staged files themselves — on the 14,3 in #7 they are identical in size and `version.plist`
+build to a machine that cold-boots fine.
+
+Worth separating before adding a report:
 
 - **Which ESP does the firmware read?** `esp-selected` is the partition the tool wrote to, not
   proof that the firmware boots from it. `esp-candidates: 2` with an `esp[n].removable: yes`
   means a USB stick with its own EFI partition was attached; unplug everything removable and
   cold boot again. On a Mac that also has macOS, check that `EFI/APPLE` on the partition the
   tool chose is the one the firmware blesses.
-- **Was `EFI/APPLE` there before?** A pre-existing `FDRData` of a different size than the one
-  `provision` fetched means the folder was populated earlier and never activated, so the
-  machine may have been in this state before t1-revive ran.
+- **Has the firmware ever loaded anything from this ESP?** If a pre-existing `EFI/APPLE` was
+  present and never activated either, the machine may have been in this state before
+  t1-revive ran, and the question is not about what the tool stages.
 - **Cold boot means power off.** A warm `reboot` does not power-cycle the T1, and neither does
   suspend; the T1 is a separate always-on computer. Shut down, wait, power on.
+- **Boot macOS Recovery** (`⌘R`, or `⌘⌥R` for internet recovery when the disk has no macOS).
+  It changes nothing on disk and is the only way to exercise Apple's own firmware-to-T1 path
+  and Apple's own display stack. A Touch Bar that lights there says the firmware can boot this
+  T1 and the panel emits; one that stays dark says the fault is the machine's and predates
+  this tool.
 
 There is no host-side check that distinguishes "the firmware never tried" from "the firmware
-tried and the T1 rejected the image": nothing the T1 does before the kernel starts is visible
-from Linux. Say which of the above you ruled out when you report.
+tried and the T1 rejected the image": the handover completes before the kernel runs. On a
+machine that works, the T1's **first and only** enumeration is already `05ac:8600`, about a
+second into the boot, with no `1281` at any point — so there is no transient for Linux to
+catch. Say which of the above you ruled out when you report.
+
+Two things that look like signals and are not:
+
+- **The strip lighting during the T1's firmware phase** tells you the firmware handed over an
+  image — but only on a machine whose display path works. Where `appletbdrm` fails to probe
+  (`-110`, `drm: unavailable`), the panel is dark on a known-good USB boot too, so "dark"
+  appears in both branches and decides nothing.
+- **`EFI/APPLE/LOG/` and its `BOOT-*.LOG` files.** A T1 boot from the ESP does not write them:
+  a 14,3 that loads `EMBEDDEDOS` from its ESP on every cold boot has no `LOG/` directory at
+  all. Stale or absent boot logs are not evidence either way; on a wiped-and-restored ESP they
+  are a leftover of the macOS-era backup.
 
 ## Handover to t1bridge
 
