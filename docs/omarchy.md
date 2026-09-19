@@ -137,7 +137,15 @@ sudo systemctl edit t1bridge-import.service
 sudo systemctl daemon-reload && sudo systemctl start t1bridge-import.service
 ```
 
-Not seen on the 14,3. If it reproduces for you, it belongs upstream with t1bridge.
+Not seen on the 14,3. On a 13,2 (issue #10) the drop-in was **not** enough and the unit still
+failed with exit 30; running the import by hand against the already-mounted ESP worked:
+
+```sh
+sudo t1bridge machine-data import --from /boot/EFI/APPLE/EMBEDDEDOS
+```
+
+If the unit fails for you either way, the import by hand is the way through, and the unit
+belongs upstream with t1bridge.
 
 **The Touch Bar stays dark until you log out and back in.** The renderer runs under your
 systemd user manager, which fixed its supplementary groups when the session started, before

@@ -188,6 +188,14 @@ cmd_preflight() {
   if distro_installed t1bridge 2>/dev/null; then pf_ok "t1bridge installed ($(distro_pkg_version t1bridge)); regenerate unloads its modules while the T1 is in recovery and hands the T1 back at the end"
   else pf_ok "t1bridge not installed (install it after the regeneration for Touch Bar and Touch ID)"; fi
   if lsmod 2>/dev/null | grep -q -E '^(t1_cfgsel|apple_dfr_cfgsel) '; then note "a USB configuration selector module is loaded; regenerate unloads it before touching the T1"; fi
+  local legacy
+  if legacy=$(legacy_t1_stack); then
+    pf_no "an older Touch Bar stack is still on this machine: $(printf '%s' "$legacy" | paste -sd'; ' -)"
+    note "it binds the T1 and pins its USB configuration, so the boot step reaches 8600 and then wedges (issue #10)"
+    note "stop and mask any unit that loads it (a blacklist alone does not help: such units insmod the module directly), move the udev rule aside, then reboot"
+  else
+    pf_ok "no older Touch Bar stack (apple-ib-drv and friends)"
+  fi
   if dir_nonempty "$T1R_STATE/private"; then
     pf_ok "prior private state under $T1R_STATE/private"
     warn "a previous run left state: resume with 't1-revive regenerate --from STEP', or move $T1R_STATE/private aside for a from-nothing run"

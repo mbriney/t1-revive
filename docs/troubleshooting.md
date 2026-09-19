@@ -166,6 +166,32 @@ the degraded restore personality, not a booted OS: the image did not boot. Power
 The blind memboot was not accepted. Power cycle and try `--from boot` once more before
 changing anything.
 
+## The boot step reached 8600 and then the tool hung
+
+The watch saw `05ac:8600`, so the T1 booted, and then nothing moved; the chain ended
+`result=error code=5`. Look for an older Touch Bar stack before anything else. The
+out-of-tree drivers that predate t1bridge (`apple-ib-drv` and its forks:
+`apple_ibridge`, `apple_ib_tb`, `apple_ib_als`) bind the T1's HID interfaces, and the
+udev rules that ship with them pin its USB configuration to 1. The boot step then reaches
+`8600` and the post-watch USB walk wedges against a device something else is holding.
+Seen twice in a row on a 13,2 (issue #10); the chain finished at the first attempt once
+the stack was out of the way.
+
+`preflight` says so since 0.1.3 (`an older Touch Bar stack is still on this machine`),
+naming each leftover it found. To clear it:
+
+```sh
+systemctl list-units --all | grep -iE 'touchbar|ibridge'   # find the unit that loads it
+sudo systemctl disable --now <unit> && sudo systemctl mask <unit>
+sudo mv /etc/udev/rules.d/99-ibridge.rules{,.disabled}     # whatever pins the configuration
+sudo modprobe -r apple_ib_tb apple_ib_als apple_ibridge
+```
+
+A blacklist on its own is not enough: the reported machine had a unit that `insmod`s the
+module directly, which is why an installed DKMS build counts even when nothing is loaded
+yet. Reboot after clearing it, then rerun `preflight`. That stack is incompatible with
+t1bridge too, so this is not a change you undo afterwards.
+
 ## T1 in recovery after regeneration completed
 
 The run finished, the ESP is staged, and after a power cycle the T1 is at `1281` and the bar

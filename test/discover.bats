@@ -307,3 +307,126 @@ STUB
   assert_status 0
   assert_eq "sourced-ok" "$output"
 }
+
+# --- leftovers of older Touch Bar stacks (issue #10) -----------------------------------------
+# lsmod and dkms are stubbed so the answer never depends on the machine running the suite, and
+# the udev directories are fixtures. The live-machine case (a clean 14,3 with t1bridge loaded)
+# must stay clean: appletbdrm, apple_t1_ncm and t1_cfgsel are t1bridge's own and are not
+# leftovers.
+legacy_env() {
+  t1r_load discover
+  t1r_need legacy_t1_stack
+  export T1R_UDEV_RULES_DIRS=$T1R_TMP/udev
+  mkdir -p "$T1R_UDEV_RULES_DIRS"
+  t1r_stub_bin lsmod <<'STUB'
+#!/usr/bin/env bash
+cat "${T1R_STUB_LSMOD:-/dev/null}" 2>/dev/null || true
+STUB
+  t1r_stub_bin dkms <<'STUB'
+#!/usr/bin/env bash
+cat "${T1R_STUB_DKMS:-/dev/null}" 2>/dev/null || true
+STUB
+  export T1R_STUB_LSMOD=$T1R_TMP/lsmod.txt T1R_STUB_DKMS=$T1R_TMP/dkms.txt
+  : >"$T1R_STUB_LSMOD"; : >"$T1R_STUB_DKMS"
+}
+
+@test "legacy_t1_stack: a clean machine prints nothing and returns 1" {
+  legacy_env
+  run legacy_t1_stack
+  assert_status 1
+  assert_eq '' "$output"
+}
+
+@test "legacy_t1_stack: t1bridge's own modules are not leftovers" {
+  legacy_env
+  printf 'appletbdrm 24576 1
+apple_t1_ncm 12288 0
+t1_cfgsel 12288 0
+cdc_ncm 53248 2
+' >"$T1R_STUB_LSMOD"
+  run legacy_t1_stack
+  assert_status 1
+  assert_eq '' "$output"
+}
+
+@test "legacy_t1_stack: a loaded legacy module is reported" {
+  legacy_env
+  printf 'apple_ibridge 20480 2 apple_ib_tb
+apple_ib_tb 16384 0
+' >"$T1R_STUB_LSMOD"
+  run legacy_t1_stack
+  assert_status 0
+  assert_contains "$output" 'module apple_ibridge'
+  assert_contains "$output" 'module apple_ib_tb'
+}
+
+@test "legacy_t1_stack: a DKMS build counts even when the module is not loaded" {
+  legacy_env
+  printf 'apple-ib-drv/0.1, 7.2.3-arch1-3, x86_64: installed
+' >"$T1R_STUB_DKMS"
+  run legacy_t1_stack
+  assert_status 0
+  assert_contains "$output" 'dkms apple-ib-drv'
+  refute_contains "$output" 'module '
+}
+
+@test "legacy_t1_stack: an unrelated DKMS package is left alone" {
+  legacy_env
+  printf 'acpi_call/1.2.2, 7.2.3-arch1-3, x86_64: installed
+t1bridge/0.1.9, 7.2.3-arch1-3, x86_64: installed
+' >"$T1R_STUB_DKMS"
+  run legacy_t1_stack
+  assert_status 1
+  assert_eq '' "$output"
+}
+
+@test "legacy_t1_stack: a loaded module and its DKMS package are both reported" {
+  legacy_env
+  printf 'apple_ibridge 20480 0
+' >"$T1R_STUB_LSMOD"
+  printf 'apple-ib-drv/0.1, 7.2.3-arch1-3, x86_64: installed
+' >"$T1R_STUB_DKMS"
+  run legacy_t1_stack
+  assert_status 0
+  assert_contains "$output" 'module apple_ibridge'
+  assert_contains "$output" 'dkms apple-ib-drv'
+}
+
+@test "legacy_t1_stack: a udev rule pinning the T1's configuration is reported" {
+  legacy_env
+  cat >"$T1R_UDEV_RULES_DIRS/99-ibridge.rules" <<'RULE'
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="05ac", ATTR{idProduct}=="8600", ATTR{bConfigurationValue}="1"
+RULE
+  run legacy_t1_stack
+  assert_status 0
+  assert_contains "$output" 'udev '
+  assert_contains "$output" '99-ibridge.rules'
+}
+
+@test "legacy_t1_stack: a configuration pin for some other device is left alone" {
+  legacy_env
+  cat >"$T1R_UDEV_RULES_DIRS/50-other.rules" <<'RULE'
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="1234", ATTR{idProduct}=="5678", ATTR{bConfigurationValue}="2"
+RULE
+  run legacy_t1_stack
+  assert_status 1
+  assert_eq '' "$output"
+}
+
+@test "legacy_t1_stack: a T1 rule that does not pin a configuration is left alone" {
+  legacy_env
+  cat >"$T1R_UDEV_RULES_DIRS/90-t1bridge-xart.rules" <<'RULE'
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="05ac", ATTR{idProduct}=="8600", TAG+="uaccess"
+RULE
+  run legacy_t1_stack
+  assert_status 1
+  assert_eq '' "$output"
+}
+
+@test "legacy_t1_stack: a missing rules directory is not an error" {
+  legacy_env
+  export T1R_UDEV_RULES_DIRS=$T1R_TMP/does-not-exist
+  run legacy_t1_stack
+  assert_status 1
+  assert_eq '' "$output"
+}

@@ -34,6 +34,55 @@ model_status() {
   printf 'unsupported\n'
 }
 
+# ----- leftovers of older Touch Bar stacks ----------------------------------------------
+# The pre-t1bridge out-of-tree drivers (apple-ib-drv and its forks) bind the T1's HID
+# interfaces and pin its USB configuration to 1. That fights every step of a regeneration:
+# the boot step reaches 05ac:8600 and the post-watch USB walk then wedges (issue #10, where
+# the chain died twice with code 5 before the stack was disabled). Blacklisting is not
+# enough on its own - the reported machine had a unit that `insmod`s the module late, which
+# is why an installed-but-unloaded DKMS build counts as a finding too.
+T1R_LEGACY_MODULES="apple_ibridge apple_ib_tb apple_ib_als appletb"
+# DKMS names its packages, not its modules: apple-ib-drv is the source package that builds
+# apple_ibridge, apple_ib_tb and apple_ib_als, so the two lists do not overlap by spelling.
+T1R_LEGACY_DKMS="apple-ib-drv apple-ibridge apple-touchbar appletb"
+# Admin-provided rule directories only: package-provided rules under /usr/lib/udev/rules.d
+# are t1bridge's own and must never be flagged.
+: "${T1R_UDEV_RULES_DIRS:=/etc/udev/rules.d /run/udev/rules.d}"
+export T1R_LEGACY_MODULES T1R_LEGACY_DKMS T1R_UDEV_RULES_DIRS
+
+# legacy_t1_stack: one line per leftover found, "KIND DETAIL"; returns 1 when the machine is
+# clean. Reads only - nothing is unloaded, unlinked or masked.
+#   module NAME   a legacy module is loaded right now
+#   dkms NAME     a legacy DKMS package is built and installed, so something can insmod it
+#                 again after a blacklist or a reboot - both are reported when both are true
+#   udev PATH     an admin udev rule that pins the T1's USB configuration
+legacy_t1_stack() {
+  local found=1 m d f mods dk
+  mods=$(lsmod 2>/dev/null) || mods=''
+  dk=$(dkms status 2>/dev/null) || dk=''
+  for m in $T1R_LEGACY_MODULES; do
+    if printf '%s\n' "$mods" | awk -v m="$m" '$1==m{f=1} END{exit !f}'; then
+      printf 'module %s\n' "$m"; found=0
+    fi
+  done
+  for m in $T1R_LEGACY_DKMS; do
+    if printf '%s\n' "$dk" | awk -v m="$m" 'index($0, m "/")==1{f=1} END{exit !f}'; then
+      printf 'dkms %s\n' "$m"; found=0
+    fi
+  done
+  for d in $T1R_UDEV_RULES_DIRS; do
+    [[ -d "$d" ]] || continue
+    while IFS= read -r f; do
+      [[ -n "$f" ]] || continue
+      # a configuration pin is only interesting when the rule is about the T1
+      if grep -qiE '05ac|8600|ibridge|touch ?bar' "$f" 2>/dev/null; then
+        printf 'udev %s\n' "$f"; found=0
+      fi
+    done < <(grep -rlsF 'bConfigurationValue' "$d" 2>/dev/null | sort)
+  done
+  return "$found"
+}
+
 # ----- ESP -----------------------------------------------------------------------------
 # _esp_lsblk_json: the lsblk tree as JSON (from T1R_LSBLK_JSON when set).
 _esp_lsblk_json() {

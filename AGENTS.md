@@ -89,6 +89,7 @@ docs/                    how-it-works, threat-model, troubleshooting, diagnostic
 | `T1R_ESP_DEV` | unset | pin the ESP device when two candidates look alike (conf file) |
 | `T1R_ESP_PROBE` | `auto` | unmounted ESPs: `auto` = look inside through a read-only mount as root on a real block device; `0` = never; `1` = always try (tests, stub mount) |
 | `T1R_FRST_METHOD` | unset | pin the reset method when the tables define several; must be one of them (conf file) |
+| `T1R_UDEV_RULES_DIRS` | `/etc/udev/rules.d /run/udev/rules.d` | admin udev directories `legacy_t1_stack` scans; never the package-provided `/usr/lib/udev/rules.d`, which is t1bridge's own |
 
 ## Exit codes
 
@@ -140,6 +141,11 @@ model_status ID          prints: tested | untested | unsupported, from two lists
                          T1R_TESTED_MODELS:   MacBookPro14,3 14,2 13,3 13,2 - every T1 Mac, since issue #9
                          T1R_UNTESTED_MODELS: empty; a model here warns and continues
                          unsupported: anything else (die 4)
+legacy_t1_stack          one line per leftover of a pre-t1bridge Touch Bar stack, "KIND DETAIL":
+                         module NAME (loaded), dkms NAME (built, so something can insmod it
+                         again), udev PATH (an admin rule pinning the T1's USB configuration).
+                         Returns 1 when clean. Reads only; lists in T1R_LEGACY_MODULES and
+                         T1R_LEGACY_DKMS, directories in T1R_UDEV_RULES_DIRS
 esp_candidates           prints "DEVICE MOUNTPOINT HAS_APPLE" per line for partitions with
                          PARTTYPE c12a7328-f81f-11d2-ba4b-00a0c93ec93b (from lsblk -J or T1R_LSBLK_JSON);
                          HAS_APPLE is yes/no when mounted or probed (esp_probe), "?" otherwise

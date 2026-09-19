@@ -24,6 +24,8 @@ pf_load() {
   t1r_need cmd_preflight
   # the installed kernel matching the running one is a property of the machine, not of the code
   distro_kernel_matches() { return 0; }
+  # so is whether this machine carries an old Touch Bar stack; the dedicated tests override it
+  legacy_t1_stack() { return 1; }
   # nothing in this suite may install a package
   T1R_TEST_INSTALLS=$T1R_TMP/installs.log
   : >"$T1R_TEST_INSTALLS"
@@ -211,4 +213,35 @@ pf_omarchy_kernel() {
   assert_contains "$output" 'missing packages: linux-omarchy-headers'
   printf '%s\n' "$output" | grep -q '^  NO  no kernel headers for' || {
     echo "the headers check should have failed" >&2; return 1; }
+}
+
+# --- an older Touch Bar stack blocks the run (issue #10) -------------------------------------
+# On a 13,2 the legacy apple-ib-drv stack pinned the T1 to USB configuration 1 and the boot
+# step reached 8600 and then wedged, twice, with code 5. Preflight has to say so before the
+# run rather than after it.
+@test "preflight: an older Touch Bar stack is a NO that names what was found" {
+  pf_load
+  legacy_t1_stack() {
+    printf 'module apple_ibridge
+dkms apple-ib-drv
+udev /etc/udev/rules.d/99-ibridge.rules
+'
+  }
+  run cmd_preflight --local
+  assert_status 3
+  printf '%s
+' "$output" | grep -q '^  NO  an older Touch Bar stack' || {
+    echo "no NO line for the legacy stack" >&2; return 1; }
+  assert_contains "$output" 'module apple_ibridge'
+  assert_contains "$output" 'dkms apple-ib-drv'
+  assert_contains "$output" '99-ibridge.rules'
+  assert_contains "$output" 'a blacklist alone does not help'
+}
+
+@test "preflight: a clean machine gets an ok line for the legacy stack check" {
+  pf_load
+  run cmd_preflight --local
+  printf '%s
+' "$output" | grep -q '^  ok  no older Touch Bar stack' || {
+    echo "no ok line for the legacy stack check" >&2; return 1; }
 }

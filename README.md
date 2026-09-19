@@ -51,9 +51,9 @@ Touch ID.
 > - Run it only on `MacBookPro13,2`, `13,3`, `14,2` or `14,3`. Anything else is refused.
 >   All four now have a confirmed run ([Tested](#-tested)); read
 >   [docs/hardware-validation.md](docs/hardware-validation.md) and report yours.
-> - Five machines so far. Everything below was proven on one MacBookPro14,3, several times,
->   including from a fresh install, then once each by testers on a 14,2, a 13,3 and a 13,2,
->   with one more 14,2 as the intact-firmware control. That is evidence, not coverage: one
+> - Six machines so far. Everything below was proven on one MacBookPro14,3, several times,
+>   including from a fresh install, then by testers on a 14,2, a 13,3 and two 13,2s, with one
+>   more 14,2 as the intact-firmware control. That is evidence, not coverage: one
 >   14,3 report ([#7](https://github.com/niconistal/t1-revive/issues/7)) has a verified staged
 >   set that the firmware does not load at cold boot, and it is open — on that machine the
 >   firmware has never loaded `EMBEDDEDOS` from that ESP, including the Mac's own Apple set
@@ -81,6 +81,7 @@ Touch ID.
 | MacBookPro14,2 | 2026-09-15 intact-ESP control: `status` and `report` on a Mac that dual-boots macOS, firmware intact, T1 booted; found the two-ESP defects fixed in 0.1.1 (issue #2) · 2026-09-16 confirmed 0.1.1 on that layout: Apple's ESP chosen by the `EFI/APPLE` rule, nothing left mounted, the partition byte-identical before and after. Regeneration deliberately not run | ⚪ not run | ⚪ not run (Touch ID was confirmed on that machine during a t1bridge trial that was later rolled back) | @bjhinkle |
 | MacBookPro13,3 | 2026-09-16 wiped-ESP regeneration on 0.1.1, kernel `7.2.5-3-omarchy`: two stops at `reset-1` (exit 3, `acpi_call` not loaded at that moment), then provision → handover clean with `--from`, 4 min 4 s; t1bridge 0.1.9 installed afterwards, keybag ready, Touch ID enrolled at the second try, sudo, polkit and lock screen by touch with the password fallback; camera captures a frame. Run report with every failure and its fix: issue #4 · 2026-09-17 follow-up on `75087ca`: off-disk backup to a USB stick, sha256 still matching the sidecar after a true S5 power cut, and the enrolled finger present on the first boot after it. Issue #8 | 🟢 | 🟢 persists across a cold boot, enrolment kept | reported in #4 and #8 (handle on request) |
 | MacBookPro13,2 | 2026-09-17 wiped-ESP regeneration on 0.1.1 (`75087ca`), kernel `7.2.5-3-omarchy`, single-ESP layout: two dry runs, then provision → stage clean at the first attempt, 4 min 51 s of step time, `stage result=verified`, `handover` skipped (t1bridge not installed yet). Cold boot: the kernel's first and only T1 enumeration was `05ac:8600` — `1281` never appeared. t1bridge 0.1.9 built and installed afterwards, Esc and F1–F12 rendering. Found the preflight headers false positive fixed in 0.1.2. Run report: issue #9 | 🟢 | ⚪ not run (t1bridge installed after the run; Touch Bar confirmed by eye) | @pmbemax |
+| MacBookPro13,2 | 2026-09-18 wiped-ESP regeneration on 0.1.1, kernel `7.2.5-3-omarchy`, on a host that still carried a pre-t1bridge Touch Bar stack (legacy `apple-ib-drv` DKMS, a unit that `insmod`s it past the blacklist, a udev rule pinning USB configuration 1). The boot step reached `8600` and the chain then wedged twice with `code=5`; with that stack disabled, `--from boot` finished `chain result=ok` at the first attempt. t1bridge 0.1.9 + `t1bridge-omarchy` 0.2.1 afterwards: bar dark across a boot with several S3 suspends, then lit and stayed lit after a full power cycle; Touch ID enrolled on the second try. Found the missing preflight check added in 0.1.3. Run report: issue #10 | 🟢 | 🟢 enrolled; `verify` not completed in that session | @ncolina |
 
 A confirmed run on any model becomes a row here with your
 handle if you want it there. See [Testing and reporting](#-testing-and-reporting).

@@ -4,6 +4,24 @@ Dates are the days the work was proven on hardware, taken from the maintainer's 
 engineering notebook. Everything before the first public version happened on one
 MacBookPro14,3.
 
+## 0.1.3 (unreleased)
+
+A second MacBookPro13,2 (issue #10, @ncolina), on a host that had carried an older Touch Bar
+stack since before t1bridge existed. The regeneration itself was fine; getting to it was not.
+
+- **`preflight` now refuses when a pre-t1bridge Touch Bar stack is still installed.** The
+  out-of-tree drivers that predate t1bridge (`apple-ib-drv` and its forks) bind the T1's HID
+  interfaces and their udev rules pin its USB configuration to 1. On that machine the boot
+  step reached `05ac:8600` and the post-watch USB walk then wedged against a device something
+  else was holding - twice, `result=error code=5` - and the chain only completed once the
+  stack was out of the way. `legacy_t1_stack` reports each leftover it finds: a loaded module,
+  a DKMS package that is merely built (which counts, because the reported machine had a unit
+  that `insmod`s it past the blacklist), and an admin udev rule that pins the configuration.
+  Package-provided rules under `/usr/lib/udev/rules.d` are never flagged: those are t1bridge's
+  own. `docs/troubleshooting.md` has the entry and the commands to clear it
+- `docs/omarchy.md`: the `WorkingDirectory` drop-in does not always clear the
+  `t1bridge-import.service` exit 30; importing by hand from the mounted ESP did
+
 ## 0.1.2 (2026-09-17)
 
 Six tester reports (issues #4 to #9) on 0.1.0 and 0.1.1, four of them successful regenerations
