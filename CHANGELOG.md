@@ -4,7 +4,7 @@ Dates are the days the work was proven on hardware, taken from the maintainer's 
 engineering notebook. Everything before the first public version happened on one
 MacBookPro14,3.
 
-## 0.1.3 (unreleased)
+## 0.1.3 (2026-09-19)
 
 A second MacBookPro13,2 (issue #10, @ncolina), on a host that had carried an older Touch Bar
 stack since before t1bridge existed. The regeneration itself was fine; getting to it was not.
