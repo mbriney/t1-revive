@@ -225,9 +225,27 @@ Worth separating before adding a report:
   suspend; the T1 is a separate always-on computer. Shut down, wait, power on.
 - **Boot macOS Recovery** (`⌘R`, or `⌘⌥R` for internet recovery when the disk has no macOS).
   It changes nothing on disk and is the only way to exercise Apple's own firmware-to-T1 path
-  and Apple's own display stack. A Touch Bar that lights there says the firmware can boot this
-  T1 and the panel emits; one that stays dark says the fault is the machine's and predates
-  this tool.
+  and Apple's own display stack. A Touch Bar that lights there says the firmware boots this T1
+  and the panel emits, so both are fine and the question is what the firmware will not accept
+  from the ESP under Linux.
+  **A strip that stays dark is only half an answer**, and reading it as a whole one is a
+  mistake worth avoiding: it says the panel does not emit, not that the firmware skipped the
+  T1, because a T1 that boots perfectly behind a dead panel looks identical from outside. Go
+  to **Utilities → Terminal** in the same Recovery session and split them:
+
+  ```console
+  system_profiler SPUSBDataType | grep -i -B2 -A6 bridge
+  ```
+
+  An `iBridge` listed as an ordinary device means Apple's firmware does boot this T1 and only
+  the display is dead. Absent, or present in a DFU/recovery mode, means the firmware does not
+  boot it under Apple's own OS either — a board-level fault that predates this tool.
+
+  **A dead panel is not a dead machine.** Touch ID and the FaceTime camera sit behind the same
+  chip and neither needs the display, so with the T1 at `8600` (`regenerate --from boot`) both
+  are worth testing: `ls /dev/video*` and an enrolment through t1bridge. A machine that gets
+  its fingerprint reader and webcam back with no working strip is a much better outcome than
+  treating the dark bar as the end of it.
 
 There is no host-side check that distinguishes "the firmware never tried" from "the firmware
 tried and the T1 rejected the image": the handover completes before the kernel runs. On a
